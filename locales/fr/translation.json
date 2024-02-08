@@ -1,0 +1,45 @@
+
+{
+	"general": {
+		"loading": "Chargement en cours..."
+	},
+	"error": {
+		"invalid_data": "{{object}} invalide !",
+		"empty_data": "Le champ '{{object}}' est vide !",
+		"too_short_data": "Le champ '{{object}}' est trop petit !",
+		"too_long_data": "Le champ '{{object}}' est trop long !",
+		"account_locked": "Le compte est verrouillé",
+		"account_not_locked": "Le compte n'est pas verrouillé",
+		"account_not_found": "Ce compte n'existe pas",
+		"invalid_account_ident": "email inconnu ou password incorrect",
+		"prop": {
+			"is_not_defined": "La propriété {{property}} n'est pas définie",
+			"is_null": "La propriété {{property}} est vide",
+			"is_not_an_integer": "La propriété {{property}} n'est pas définie",
+			"is_too_small": "La propriété {{property}} est trop petite",
+			"is_too_large": "La propriété {{property}} est trop grande",
+			"is_not_a_string": "La propriété {{property}} n'est pas une chaîne",
+			"is_too_short": "La propriété {{property}} est trop courte",
+			"is_too_long": "La propriété {{property}} est trop longue",
+			"is_not_a_boolean": "La propriété {{property}} n'est pas un booléen",
+			"is_not_a_date": "La propriété {{property}} n'est pas une date",
+			"is_not_a_pure_date": "La propriété {{property}} n'est pas une date",
+			"is_not_a_date_time": "La propriété {{property}} n'est pas une date/heure",
+			"is_malformed_email": "La propriété {{property}} n'est pas une adresse mail valide",
+			"is_malformed_uuid": "La propriété {{property}} n'est pas un UUID valide",
+			"is_malformed": "La propriété {{property}} est mal formatée",
+			"password_to_small": "Le mot de passe est trop petit",
+			"password_no_lowercase_letter": "Le mot de passe ne contient pas de lettre minuscule",
+			"password_no_uppercase_letter": "Le mot de passe ne contient pas de lettre majsucule",
+			"password_no_digit_character": "Le mot de passe ne contient pas de caractère numérique",
+			"password_no_special_character": "Le mot de passe ne contient pas de caractère spécial"
+		}
+
+
+	},
+	"register": {
+		"account_already_exists" : "Un compte avec cet email existe déjà",
+		"mail_body": "Bonjour,\nVotre code pour la création d'un compte vaut {{code}}.\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message",
+		"mail_title": "Enregistrement Comaint"
+	}
+}

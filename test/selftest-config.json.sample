@@ -1,0 +1,10 @@
+{
+	"backend_url": "http://<BACKEND_HOST>:<BACKEND_PORT>",
+	"test_email_1": "<FIRST_TEST_EMAIL>",
+	"test_email_2": "<SECOND_TEST_EMAIL>",
+	"host": "localhost",
+	"port" : 3306,
+	"database" : "db_comaint",
+	"user": "<USER_NAME>",
+	"password" : "<USER_PASSWORD>",
+}

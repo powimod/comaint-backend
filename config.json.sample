@@ -1,0 +1,34 @@
+{
+        "server" : { 
+                "host": "127.0.0.1" ,
+                "port": 9001
+        },
+        "security" : {
+		"tokenSecret" : "<YOUR_SECRET>",
+		"hashSalt" : 10,
+		"refreshTokenLifespan": 365,
+		"accessTokenLifespan": 120 
+        },
+        "database" : {
+                "host": "localhost",
+                "port" : 3306,
+                "database" : "db_comaint",
+                "user": "<USER_NAME>",
+                "password" : "<USER_PASSWORD>",
+		"pingInterval" : 60000,
+		"reconnection" : {
+			"interval" : 1000,
+			"maxRetries": 600
+		}
+        },
+	"mail": {
+		"host": "mail.<DOMAIN>",
+		"port": 465,
+		"user": "<MAIL-USER>",
+		"password" : "<MAIL-PASSWORD>",
+		"from": "noreply@<DOMAIN>"
+	},
+	"parameters": {
+		"resultsPerPage": 10
+	}
+}
