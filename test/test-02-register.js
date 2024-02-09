@@ -57,7 +57,9 @@ describe('Test user registration', () => {
 				expect(json.data.userId).to.be.a('number')
 
 				expect(json.data).to.have.property('companyId')
-				expect(json.data.companyId).to.be.null
+				expect(json.data.companyId).not.to.be.null
+				expect(json.data.companyId).to.be.a('number').and.not.to.be.equal(0)
+
 				expect(json.data).to.have.property('access-token')
 				expect(json.data).to.have.property('refresh-token')
 

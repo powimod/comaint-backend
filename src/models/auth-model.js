@@ -112,7 +112,8 @@ class AuthModel {
 		company = await CompanyModel.editCompany(company)
 
 		return {
-			userId : user.id
+			userId : user.id,
+			companyId: user.companyId
 		}
 
 	}

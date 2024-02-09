@@ -85,11 +85,15 @@ exports.initialize = (app, authModel, View, config) => {
 
 			const result = await _authModel.register(email, password, firstname, lastname, validationCode, request.t);
 
-			const userId = result.userId; 
+			const userId = result.userId;
 			if (userId === undefined)
-				throw new Error('userId not found in HTTP response'); 
+				throw new Error('userId not found')
 
-			const companyId = null;
+			const companyId = result.companyId
+			if (companyId === undefined)
+				throw new Error('companyId not found')
+			if (companyId === null)
+				throw new Error('companyId is null')
 
 			await _authModel.sendValidationCode(validationCode, email, request.t);
 
@@ -148,24 +152,24 @@ exports.initialize = (app, authModel, View, config) => {
 
 			const userId = result.userId; 
 			if (userId === undefined)
-				throw new Error('userId not found in HTTP response'); 
+				throw new Error('userId not found'); 
 
 			if (result.email === undefined)
-				throw new Error('email not found in HTTP response'); 
+				throw new Error('email not found'); 
 			if (result.email !== email)
 				throw new Error('email is not valid'); 
 
 			const companyId = result.companyId;
 			if (companyId === undefined)
-				throw new Error('companyId not found in HTTP response');
+				throw new Error('companyId not found');
 			
 			const firstname = result.firstname
 			if (firstname === undefined) 
-				throw new Error('firstname not found in HTTP response'); 
+				throw new Error('firstname not found'); 
 			
 			const lastname = result.lastname
 			if (lastname === undefined) 
-				throw new Error('lastname not found in HTTP response'); 
+				throw new Error('lastname not found'); 
 			
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
