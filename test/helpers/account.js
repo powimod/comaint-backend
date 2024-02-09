@@ -63,6 +63,7 @@ const declareUser = async (refUser) => {
 	if (user !==  null) {
 		// delete existing tokens
 		await util.dbRequest("DELETE FROM tokens WHERE id_user = ?", [ user.id ] )
+		console.log(refUser) // TODO cleanup
 		await login(refUser)
 		return user
 	}

@@ -55,6 +55,7 @@ exports.initialize = (app, authModel, View, config) => {
 	app.post('/api/v1/auth/register', async (request, response) => {
 		try {
 			const email = request.body.email;
+			console.log(email) // TODO cleanup
 			if (email === undefined)
 				throw new Error(`Can't find <email> in request body`);
 			// TODO control password complexity
@@ -79,42 +80,11 @@ exports.initialize = (app, authModel, View, config) => {
 			if (lastname.length === 0)
 				throw new Error(request.t('error.empty_data', {'object': 'lastname'}));
 			
-			const administrator = request.body.administrator
-			if (administrator === undefined)
-				throw new Error('administrator not found in request body'); 
-			if (administrator.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'administrator'}));
-			
-			const parkRole = request.body.parkRole
-			if (parkRole === undefined)
-				throw new Error('parkRole not found in request body'); 
-			if (parkRole.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'parkRole'}));
-			
-			const stockRole = request.body.stockRole
-			if (stockRole === undefined)
-				throw new Error('stockRole not found in request body'); 
-			if (stockRole.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'stockRole'}));
-			
-			const active = request.body.active
-			if (active === undefined)
-				throw new Error('active not found in request body'); 
-			if (active.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'active'}));
-			
-			const accountLocked = request.body.accountLocked
-			if (accountLocked === undefined)
-				throw new Error('accountLocked not found in request body'); 
-			if (accountLocked.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'accountLocked'}));
-			
-
 			// make a random validation code which will be sent by email to unlock account
 			const validationCode = _authModel.generateValidationCode();
 			console.log(`Validation code is ${ validationCode }`); // TODO remove this
 
-			const result = await _authModel.register(email,password,firstname,lastname,administrator,parkRole,stockRole,active,accountLocked,validationCode, request.t);
+			const result = await _authModel.register(email, password, firstname, lastname, validationCode, request.t);
 
 			const userId = result.userId; 
 			if (userId === undefined)
@@ -133,17 +103,20 @@ exports.initialize = (app, authModel, View, config) => {
 				companyId: companyId,
 				firstname : firstname,
 				lastname : lastname,
+				/* TODO cleanup
 				administrator : administrator,
 				parkRole : parkRole,
 				stockRole : stockRole,
 				active : active,
 				accountLocked : accountLocked,
 				email: email,
+				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
 		}
 		catch (error) {
+			console.log(error)
 			View.sendJsonError(response, error);
 		}
 	});
@@ -194,7 +167,6 @@ exports.initialize = (app, authModel, View, config) => {
 			const companyId = result.companyId;
 			if (companyId === undefined)
 				throw new Error('companyId not found in HTTP response');
-
 			
 			const firstname = result.firstname
 			if (firstname === undefined) 
@@ -204,6 +176,7 @@ exports.initialize = (app, authModel, View, config) => {
 			if (lastname === undefined) 
 				throw new Error('lastname not found in HTTP response'); 
 			
+			/* TODO cleanup
 			const administrator = result.administrator
 			if (administrator === undefined) 
 				throw new Error('administrator not found in HTTP response'); 
@@ -223,10 +196,10 @@ exports.initialize = (app, authModel, View, config) => {
 			const accountLocked = result.accountLocked
 			if (accountLocked === undefined) 
 				throw new Error('accountLocked not found in HTTP response'); 
+				*/
 			
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
-
 			const newRefreshToken = await _authModel.generateRefreshToken(userId, companyId);
 
 			View.sendJsonResult(response, {
@@ -234,12 +207,14 @@ exports.initialize = (app, authModel, View, config) => {
 				companyId: result.companyId,
 				firstname : firstname,
 				lastname : lastname,
+				/* TODO cleanup
 				administrator : administrator,
 				parkRole : parkRole,
 				stockRole : stockRole,
 				active : active,
 				accountLocked : accountLocked,
 				email: result.email,
+				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});

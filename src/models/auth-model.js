@@ -55,12 +55,11 @@ class AuthModel {
 		); 
 	}
 
-	static async register(email, password,firstname,lastname,administrator,parkRole,stockRole,active,accountLocked,validationCode, i18n_t) {
+	static async register(email, password,firstname,lastname,validationCode, i18n_t) {
 		assert(email !== undefined);
 		assert(password !== undefined);
 		assert(validationCode !== undefined);
 		assert(this.#model !== null);
-
 		// check an account with same email does not already exist
 		const db = this.#model.db;
 		let sql = 'SELECT email FROM users WHERE email = ?';
@@ -76,10 +75,16 @@ class AuthModel {
 		const bcrypt = require('bcrypt');
 		const passwordHash = await bcrypt.hash(password, saltRounds)
 
+		const administrator = false
+		const parkRole = 0
+		const stockRole = 0
+		const active = true
+		const accountLocked = true // account locked
+
 		const sqlRequest = `
 			INSERT INTO users
-				(email, password, firstname, lastname, administrator, parkRole, stockRole, active, accountLocked, validation_code, account_locked)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+				(email, password, firstname, lastname, administrator, park_role, stock_role, active, validation_code, account_locked)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 		const sqlParams = [
 			email,
 			passwordHash,
@@ -89,9 +94,8 @@ class AuthModel {
 			parkRole,
 			stockRole,
 			active,
-			accountLocked,
 			validationCode,
-			true // account locked
+			accountLocked
 		];
 		result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
@@ -138,8 +142,9 @@ class AuthModel {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		
-		let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, parkRole, stockRole, active, accountLocked
-			 FROM users WHERE email = ?`;
+		// TODO  cleanup
+		// let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, park_role, stock_role, active, accountLocked FROM users WHERE email = ?`;
+		let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, active, account_locked FROM users WHERE email = ?`;
 		const result = await db.query(sql, [ email ]);
 		if (result.code)
 			throw new Error(result.code);
@@ -157,11 +162,13 @@ class AuthModel {
 			email : result[0].email,
 			firstname: result[0].firstname,
 			lastname: result[0].lastname,
+			/* TODO cleanup 
 			administrator: result[0].administrator,
 			parkRole: result[0].parkRole,
 			stockRole: result[0].stockRole,
 			active: result[0].active,
 			accountLocked: result[0].accountLocked,
+			*/
 		}
 	}
 
