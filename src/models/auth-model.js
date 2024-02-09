@@ -55,7 +55,7 @@ class AuthModel {
 		); 
 	}
 
-	static async register(email, password,firstname,lastname,validationCode, i18n_t) {
+	static async register(email, password,firstname,lastname,administrator,parkRole,stockRole,active,accountLocked,validationCode, i18n_t) {
 		assert(email !== undefined);
 		assert(password !== undefined);
 		assert(validationCode !== undefined);
@@ -78,13 +78,18 @@ class AuthModel {
 
 		const sqlRequest = `
 			INSERT INTO users
-				(email, password, firstname, lastname, validation_code, account_locked)
-			VALUES (?, ?, ?, ?, ?, ?);`;
+				(email, password, firstname, lastname, administrator, parkRole, stockRole, active, accountLocked, validation_code, account_locked)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
 		const sqlParams = [
 			email,
 			passwordHash,
 			firstname,
 			lastname,
+			administrator,
+			parkRole,
+			stockRole,
+			active,
+			accountLocked,
 			validationCode,
 			true // account locked
 		];
@@ -133,7 +138,7 @@ class AuthModel {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		
-		let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname
+		let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, parkRole, stockRole, active, accountLocked
 			 FROM users WHERE email = ?`;
 		const result = await db.query(sql, [ email ]);
 		if (result.code)
@@ -152,6 +157,11 @@ class AuthModel {
 			email : result[0].email,
 			firstname: result[0].firstname,
 			lastname: result[0].lastname,
+			administrator: result[0].administrator,
+			parkRole: result[0].parkRole,
+			stockRole: result[0].stockRole,
+			active: result[0].active,
+			accountLocked: result[0].accountLocked,
 		}
 	}
 
@@ -351,7 +361,7 @@ class AuthModel {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		let sqlRequest = `
-			SELECT id,  email,firstname, lastname, id_company
+			SELECT id,  email,firstname, lastname, administrator, park_role, stock_role, active, account_locked, id_company
 			FROM users 
 			WHERE id = ?;`;
 		let sqlParams = [
@@ -362,11 +372,19 @@ class AuthModel {
 			throw new Error(result.code);
 		if (result.length === 0) 
 			throw new Error('Unknown User Id');
+		result[0].administrator = (result[0].administrator === 1)
+		result[0].active= (result[0].active === 1)
+		result[0].account_locked = (result[0].account_locked === 1)
 		const context = {
 			userId: result[0].id,
 			email: result[0].email,
 			firstname: result[0].firstname,
 			lastname: result[0].lastname,
+			administrator: result[0].administrator,
+			parkRole: result[0].park_role,
+			stockRole: result[0].stock_role,
+			active: result[0].active,
+			accountLocked: result[0].account_locked,
 			companyId: result[0].id_company
 		}
 		return context
