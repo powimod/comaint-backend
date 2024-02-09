@@ -94,7 +94,7 @@ class UserModel {
 			throw new Error(result.code);
 		const userList = [];
 		for (let userRecord of result) 
-			userList.push( userObjectHelper.convertUserFromDb(userRecord) );
+			userList.push( userObjectHelper.convertUserFromDb(userRecord), /*filter=*/true );
 		return userList;
 	}
 
@@ -111,9 +111,25 @@ class UserModel {
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const user = userObjectHelper.convertUserFromDb(result[0]);
+		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/false);
 		return user;
 	}
+
+	static async getUserByEmail(email) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		if (email === undefined)
+			throw new Error('Argument <email> required');
+		let sql = `SELECT * FROM users WHERE email = ?`;
+		const result = await db.query(sql, [email]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/ false);
+		return user;
+	}
+
 
 	static async createUser(user) {
 		assert(this.#model !== null);
@@ -123,6 +139,8 @@ class UserModel {
 		if ( error)
 			throw new Error(error)
 
+		// TODO issue-2 : encrypt password 
+		
 		const userDb = userObjectHelper.convertUserToDb(user)
 
 		const fieldNames = []

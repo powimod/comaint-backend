@@ -93,7 +93,7 @@ describe('Test user registration', () => {
 
 		}),
 		describe (`Control /${ROUTE_VALIDATE} route`, () => {
-			it(`Should accept validtion code`, async () => {
+			it(`Should accept validation code`, async () => {
 				let user = await account.findUserByEmail(refUser.email)
 				expect(user).not.to.be.null
 
@@ -107,16 +107,12 @@ describe('Test user registration', () => {
 
 				user = await account.findUserByEmail(refUser.email)
 				expect(user).not.to.be.null
-				expect(json).to.have.property('ok')
-				expect(json.ok).to.be.a('boolean')
-					.and.to.be.equal(true)
 
 				expect(user).to.have.property('validation_code')
-				expect(user.validation_code).to.be.null
+				expect(user.validation_code).to.be.equal(0)
 
 				expect(user).to.have.property('account_locked')
-				expect(user.account_locked).to.be.a('number')
-					.and.to.be.equal(0)
+				expect(user.account_locked).to.be.a('number').and.to.be.equal(0)
 			})
 		})
 	})

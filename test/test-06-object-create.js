@@ -71,7 +71,8 @@ describe('Test user edition', () => {
 				expect(foundUser.lastname).to.be.a('string').and.to.be.equal(refNewUser.lastname)
 
 				expect(foundUser).to.have.property('companyId')
-				expect(foundUser.companyId).to.be.null
+				expect(foundUser.companyId).not.to.be.null
+				expect(foundUser.companyId).to.be.a('number').and.not.to.be.equal(0)
 
 				expect(foundUser).to.have.property('active')
 				expect(foundUser.active).to.be.a('boolean').and.to.be.equal(true)
