@@ -57,12 +57,11 @@ class AuthModel {
 		); 
 	}
 
-	static async register(email, password,firstname,lastname,validationCode, i18n_t) {
+	static async register(email, password, firstname, lastname, validationCode, i18n_t) {
 		assert(email !== undefined);
 		assert(password !== undefined);
 		assert(validationCode !== undefined);
 		assert(this.#model !== null);
-
 
 		// check an account with same email does not already exist
 		let user = await this.#model.getUserModel().getUserByEmail(email)
@@ -70,17 +69,10 @@ class AuthModel {
 			throw new Error(i18n_t('register.account_already_exists'));
 
 		let company = await this.#model.getCompanyModel().createCompany({
-			name: `company of ${firstname} ${lastname}`,
+			name: `company of ${firstname} ${lastname}`, // TODO translation
 			locked: false,
 			logoUid: '' // FIXME should not be mandatory
 		})
-
-		// TODO issue-2 : move encrypting in user 
-		// make a hash of the password
-		assert(this.#config.security.hashSalt !== undefined);
-		const saltRounds = this.#config.security.hashSalt;
-		const bcrypt = require('bcrypt');
-		password = await bcrypt.hash(password, saltRounds)
 
 		const administrator = false
 		const parkRole = 0
@@ -89,19 +81,25 @@ class AuthModel {
 		const accountLocked = true // account locked
 		const companyId = company.id
 
-		user = await this.#model.getUserModel().createUser({
-			email,
-			password,
-			firstname,
-			lastname,
-			administrator,
-			parkRole,
-			stockRole,
-			active,
-			validationCode,
-			accountLocked,
-			companyId
-		})
+		try {
+			user = await this.#model.getUserModel().createUser({
+				email,
+				password,
+				firstname,
+				lastname,
+				administrator,
+				parkRole,
+				stockRole,
+				active,
+				validationCode,
+				accountLocked,
+				companyId
+			})
+		}
+		catch (error) {
+			await this.#model.getCompanyModel().deleteById(company.id, false)
+			throw error
+		}
 
 		company.managerId = user.id 
 		company = await this.#model.getCompanyModel().editCompany(company)
@@ -127,6 +125,7 @@ class AuthModel {
 		// unlock User account and reset validation code
 		user.accountLocked = false
 		user.validationCode = 0
+		delete user.password // do not re-encrypt already encrypted password !
 		await this.#model.getUserModel().editUser(user)
 	
 	}
@@ -139,13 +138,13 @@ class AuthModel {
 		if (user === null)
 			throw new Error(i18n_t('error.invalid_account_ident'));
 
-		// TODO issue-2 : move password comparaison in user 
-		const bcrypt = require('bcrypt');
-		const passwordValid = await bcrypt.compare(password, user.password);
+		const passwordValid = await this.#model.getUserModel().checkPassword(user, password)
 		if (! passwordValid)
 			throw new Error(i18n_t('error.invalid_account_ident'));
+
 		if (user.accountLocked)
 			throw new Error('User account is locked');
+
 		return {
 			userId: user.id,
 			companyId: user.companyId,
