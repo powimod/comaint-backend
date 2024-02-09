@@ -69,25 +69,33 @@ class AuthModel {
 		if (result.length > 0) 
 			throw new Error(i18n_t('register.account_already_exists'));
 
+
+		const ModelSingleton = require('./model.js');
+		const UserModel = ModelSingleton.getInstance().getUserModel()
+		const CompanyModel = ModelSingleton.getInstance().getCompanyModel()
+
+		let company = await CompanyModel.createCompany({
+			name: `company of ${firstname} ${lastname}`,
+			locked: false,
+			logoUid: '' // FIXME should not be mandatory
+		})
+
 		// make a hash of the password
 		assert(this.#config.security.hashSalt !== undefined);
 		const saltRounds = this.#config.security.hashSalt;
 		const bcrypt = require('bcrypt');
-		const passwordHash = await bcrypt.hash(password, saltRounds)
+		password = await bcrypt.hash(password, saltRounds)
 
 		const administrator = false
 		const parkRole = 0
 		const stockRole = 0
 		const active = true
 		const accountLocked = true // account locked
+		const companyId = company.id
 
-		const sqlRequest = `
-			INSERT INTO users
-				(email, password, firstname, lastname, administrator, park_role, stock_role, active, validation_code, account_locked)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-		const sqlParams = [
+		const user = await UserModel.createUser({
 			email,
-			passwordHash,
+			password,
 			firstname,
 			lastname,
 			administrator,
@@ -95,15 +103,19 @@ class AuthModel {
 			stockRole,
 			active,
 			validationCode,
-			accountLocked
-		];
-		result = await db.query(sqlRequest, sqlParams);
-		if (result.code)
-			throw new Error(result.code);
+			accountLocked,
+			companyId
+		})
+		console.log(user)
+
+		company.managerId = user.id 
+		company = await CompanyModel.editCompany(company)
 
 		return {
-			userId : result.insertId
+			userId : user.id,
+			companyId: user.companyId
 		}
+
 	}
 
 	static async validateRegistration(userId, validationCode, i18n_t) {

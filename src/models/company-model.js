@@ -164,7 +164,7 @@ class CompanyModel {
 		const companyDb = companyObjectHelper.convertCompanyToDb(company)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(userDb)) {
+		for (let [propName, propValue] of Object.entries(companyDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)

@@ -21,7 +21,7 @@ describe('Test user delete', () => {
 		await util.connectDb()
 		dbUser = await account.declareUser(util.testUser1)
 		refUserToDelete = util.testUser2
-		await account.accountPurge(util.testUser2.email)
+		await account.accountPurge(refUserToDelete)
 	}),
 	after( async () =>  {
 		await util.disconnectDb()
@@ -39,7 +39,13 @@ describe('Test user delete', () => {
 
 				expect(json).to.have.property('user')
 				expect(json.user).to.be.a('object')
+
 				userToDelete = json.user
+
+				expect(userToDelete).to.have.property('companyId')
+				expect(userToDelete.companyId).not.to.be.null
+				expect(userToDelete.companyId).to.be.a('number').and.not.to.be.equal(0)
+
 			}),
 			it(`Should detect invalid user ID`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', 'abc')
@@ -60,6 +66,7 @@ describe('Test user delete', () => {
 			it(`Should accept to delete user`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', userToDelete.id)
 				let json = await util.requestJsonPost(route, {})
+				console.log(json)
 				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(true)
 			}),

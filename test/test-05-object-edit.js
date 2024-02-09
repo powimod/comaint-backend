@@ -50,8 +50,8 @@ describe('Test user edition', () => {
 				expect(foundUser.lastname).to.be.a('string').and.to.be.equal(dbUser.lastname)
 
 				expect(foundUser).to.have.property('companyId')
-				if (foundUser.companyId !== null)
-					expect(foundUser.companyId).to.be.a('number').and.to.be.equal(dbUser.companyId)
+				expect(foundUser.companyId).not.to.be.null
+				expect(foundUser.companyId).to.be.a('number').and.not.to.be.equal(0)
 
 				// should not have password hash since it's a secret
 				expect(foundUser).not.to.have.property('password')

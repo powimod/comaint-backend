@@ -19,10 +19,19 @@ const findUserById= async (id) => {
 }
 
 const accountPurge = async (email) => {
-	const user = await findUserByEmail(email)
+	let user = await findUserByEmail(email)
 	if (user === null)
-		return;
-	await util.dbRequest("DELETE FROM tokens WHERE id_user = ?", [ user.id ] )
+		return
+	const userId = user.id
+	// try to delete user's company if he is its manager
+	await util.dbRequest("DELETE FROM companies WHERE id_manager = ?", [ userId ] )
+
+	// user may have been deleted by a cascade delete of its company
+	user = await findUserByEmail(email)
+	if (user === null)
+		return
+	
+	// TODO cleanup : await util.dbRequest("DELETE FROM tokens WHERE id_user = ?", [ user.id ] )
 	result = await util.dbRequest("DELETE FROM users WHERE id = ?", [ user.id ] )
 	if (result.affectedRows !== 1)
 		throw new Error(`Can not delete User ID = ${user.id}`)
