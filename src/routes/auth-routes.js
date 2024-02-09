@@ -74,6 +74,8 @@ exports.initialize = (app, authModel, View, config) => {
 			const validationCode = _authModel.generateValidationCode();
 			console.log(`Validation code is ${ validationCode }`); // TODO remove this
 
+			await _authModel.sendValidationCode(validationCode, email, request.t);
+
 			const result = await _authModel.register(email, password, firstname, lastname, validationCode, request.t);
 
 			const userId = result.userId;
@@ -244,8 +246,57 @@ exports.initialize = (app, authModel, View, config) => {
 			console.error("auth/refresh - error:", (error.message) ? error.message : error)
 			View.sendJsonError(response, error);
 		}
-	});
+	})
 
+
+	app.post('/api/v1/auth/locked-account/send-code', async (request, response) => {
+		try {
+			const userId = request.body.userId;
+			if (userId === undefined)
+				throw new Error(`Can't find <userId> in request body`);
+			if (isNaN(userId))
+				throw new Error(`Invalid <userId> in request body`);
+			throw new Error("Not yet implemented")
+
+			
+			const validationCode = _authModel.generateValidationCode();
+			console.log(`Unlock account validation code is ${ validationCode }`); // TODO remove this
+
+			const user = await _authModel.storeUnlockAccountCode(userId, validationCode, request.t);
+			await _authModel.sendValidationCode(validationCode, user.email, request.t);
+
+			View.sendJsonResult(response, {})
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+	app.post('/api/v1/auth/locked-account/validate-code', async (request, response) => {
+		try {
+			const userId = request.body.userId;
+			if (userId === undefined)
+				throw new Error(`Can't find <userId> in request body`);
+			if (isNaN(userId))
+				throw new Error(`Invalid <userId> in request body`);
+
+			let validationCode = request.body.validationCode;
+			if (validationCode === undefined)
+				throw new Error(`Can't find <validationCode> in request body`);
+			if (isNaN(validationCode))
+				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
+			validationCode = parseInt(validationCode);
+			if (validationCode < 10000 || validationCode > 99999)
+				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
+
+			const isValid = await _authModel.validateUnlockAccountCode(userId, code, request.t);
+
+			View.sendJsonResult(response, {isValid})
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
 
 }
 
