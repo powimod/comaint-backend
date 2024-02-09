@@ -21,7 +21,7 @@ describe('Test user delete', () => {
 		await util.connectDb()
 		dbUser = await account.declareUser(util.testUser1)
 		refUserToDelete = util.testUser2
-		await account.accountPurge(refUserToDelete)
+		await account.accountPurge(refUserToDelete.email)
 	}),
 	after( async () =>  {
 		await util.disconnectDb()
@@ -66,11 +66,9 @@ describe('Test user delete', () => {
 			it(`Should accept to delete user`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', userToDelete.id)
 				let json = await util.requestJsonPost(route, {})
-				console.log(json)
-				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(true)
 			}),
-			it(`Should user no more exists`, async () => {
+			it(`check user no more exists`, async () => {
 				let foundUser = await account.findUserById(userToDelete.id)
 				expect(foundUser).to.be.null
 			})

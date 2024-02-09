@@ -3,7 +3,9 @@ const util = require('./util.js')
 var expect = require('chai').expect;
 
 const findUserByEmail= async (email) => {
-	assert(email !== undefined)	
+	assert (email !== undefined)
+	assert (email !== null)
+	assert (typeof(email) === 'string')
 	const result = await util.dbRequest("SELECT * FROM users WHERE email = ?", [ email ] )
 	if (result.length === 0)
 		return null
@@ -11,7 +13,9 @@ const findUserByEmail= async (email) => {
 }
 
 const findUserById= async (id) => {
-	assert(id !== undefined)	
+	assert (id !== undefined)
+	assert (id !== null)
+	assert (typeof(id) === 'number')
 	const result = await util.dbRequest("SELECT * FROM users WHERE id = ?", [ id ] )
 	if (result.length === 0)
 		return null
@@ -19,6 +23,9 @@ const findUserById= async (id) => {
 }
 
 const accountPurge = async (email) => {
+	assert (email !== undefined)
+	assert (email !== null)
+	assert (typeof(email) === 'string')
 	let user = await findUserByEmail(email)
 	if (user === null)
 		return

@@ -24,7 +24,6 @@ const passwordMin = 8
 const passwordMax = 70
 const firstnameMax = 30
 const lastnameMax = 30
-const validationCodeMin = 10000
 const validationCodeMax = 99999
 const phoneMax = 25
 const stockRoleMin = 0
@@ -206,8 +205,6 @@ const controlPropertyValidationCode = (value, i18n_t = null ) => {
 	if (isNaN(value))
 		return i18n_t('error.prop.is_not_an_integer', {property: 'validationCode'})
 	value = parseInt(value)
-	if (value < validationCodeMin)
-		return i18n_t('error.prop.is_too_small', {property: 'validationCode', minLength:validationCodeMin})
 	if (value > validationCodeMax)
 		return i18n_t('error.prop.is_too_large', {property: 'validationCode', maxLength:validationCodeMax})
 	return false // no error

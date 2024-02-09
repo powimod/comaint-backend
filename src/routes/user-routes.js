@@ -69,6 +69,7 @@ module.exports = (app, UserModel, View) => {
 			// control root property 
 			if (request.companyId !== user.companyId)
 				throw new Error('Unauthorized access');
+			delete user.password
 			View.sendJsonResult(response, { user: user} );
 		}
 		catch (error) {
@@ -89,10 +90,13 @@ module.exports = (app, UserModel, View) => {
 			let newUser = await UserModel.createUser(user);
 			if (newUser.id === undefined)
 				throw new Error(`Can't find ID of newly created User`);
+			delete newUser.password
+			// TODO should use View.sendJsonResult
 			response.json({ ok: true, user : newUser });
 		}
 		catch (error) {
 			const errorMessage = (error.message !== undefined) ? error.message : error;
+			// TODO should use View.sendJsonError
 			response.json({ ok : false, error: errorMessage  });
 		}
 	});

@@ -21,9 +21,9 @@ const jwt = require('jsonwebtoken');
 const util = require('../util.js');
 
 class AuthModel {
-	static #model = null;
 	static #config = null;
 	static #secret = null;
+	static #model = null;
 
 	static initialize = (config) => {
 		assert(this.#model === null);
@@ -34,6 +34,8 @@ class AuthModel {
 
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
+
 	}
 
 	static generateValidationCode() {
@@ -55,36 +57,22 @@ class AuthModel {
 		); 
 	}
 
-	static async register(email, password,firstname,lastname,validationCode, i18n_t) {
+	static async register(email, password, firstname, lastname, validationCode, i18n_t) {
 		assert(email !== undefined);
 		assert(password !== undefined);
 		assert(validationCode !== undefined);
 		assert(this.#model !== null);
+
 		// check an account with same email does not already exist
-		const db = this.#model.db;
-		let sql = 'SELECT email FROM users WHERE email = ?';
-		let result = await db.query(sql, [ email ]);
-		if (result.code)
-			throw new Error(result.code);
-		if (result.length > 0) 
+		let user = await this.#model.getUserModel().getUserByEmail(email)
+		if (user != null)
 			throw new Error(i18n_t('register.account_already_exists'));
 
-
-		const ModelSingleton = require('./model.js');
-		const UserModel = ModelSingleton.getInstance().getUserModel()
-		const CompanyModel = ModelSingleton.getInstance().getCompanyModel()
-
-		let company = await CompanyModel.createCompany({
-			name: `company of ${firstname} ${lastname}`,
+		let company = await this.#model.getCompanyModel().createCompany({
+			name: `company of ${firstname} ${lastname}`, // TODO translation
 			locked: false,
 			logoUid: '' // FIXME should not be mandatory
 		})
-
-		// make a hash of the password
-		assert(this.#config.security.hashSalt !== undefined);
-		const saltRounds = this.#config.security.hashSalt;
-		const bcrypt = require('bcrypt');
-		password = await bcrypt.hash(password, saltRounds)
 
 		const administrator = false
 		const parkRole = 0
@@ -93,23 +81,28 @@ class AuthModel {
 		const accountLocked = true // account locked
 		const companyId = company.id
 
-		const user = await UserModel.createUser({
-			email,
-			password,
-			firstname,
-			lastname,
-			administrator,
-			parkRole,
-			stockRole,
-			active,
-			validationCode,
-			accountLocked,
-			companyId
-		})
-		console.log(user)
+		try {
+			user = await this.#model.getUserModel().createUser({
+				email,
+				password,
+				firstname,
+				lastname,
+				administrator,
+				parkRole,
+				stockRole,
+				active,
+				validationCode,
+				accountLocked,
+				companyId
+			})
+		}
+		catch (error) {
+			await this.#model.getCompanyModel().deleteById(company.id, false)
+			throw error
+		}
 
 		company.managerId = user.id 
-		company = await CompanyModel.editCompany(company)
+		company = await this.#model.getCompanyModel().editCompany(company)
 
 		return {
 			userId : user.id,
@@ -120,58 +113,44 @@ class AuthModel {
 
 	static async validateRegistration(userId, validationCode, i18n_t) {
 		assert(this.#model !== null);
-		const db = this.#model.db;
-		let sqlRequest = `
-			SELECT validation_code, account_locked
-			FROM users
-			WHERE id = ?;`;
-		let sqlParams = [
-			userId,
-		];
-		let result = await db.query(sqlRequest, sqlParams);
-		if (result.code)
-			throw new Error(result.code);
-		if (result.length === 0) 
+
+		let user = await this.#model.getUserModel().getUserById(userId)
+		if (user === null)
 			throw new Error('Unknown User Id');
-		if (validationCode !== result[0].validation_code)
+		if (validationCode !== user.validationCode)
 			throw new Error('Invalid code');
-		if (! result[0].account_locked)
+		if (! user.accountLocked)
 			throw new Error(i18n_t('error.account_not_locked'));
 
 		// unlock User account and reset validation code
-		sqlRequest = `UPDATE users 
-			SET account_locked = ?, validation_code = ?
-			WHERE id= ?`;
-		sqlParams = [ false, null, userId ];
-		result = await db.query(sqlRequest, sqlParams);
-		if (result.code)
-			throw new Error(result.code);
-		if (result.affectedRows=== 0) 
-			throw new Error(i18n_t('error.account_not_found'));
+		user.accountLocked = false
+		user.validationCode = 0
+		delete user.password // do not re-encrypt already encrypted password !
+		await this.#model.getUserModel().editUser(user)
+	
 	}
 
 	static async login(email, password, i18n_t) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		
-		let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, active, account_locked FROM users WHERE email = ?`;
-		const result = await db.query(sql, [ email ]);
-		if (result.code)
-			throw new Error(result.code);
-		if (result.length === 0) 
+		let user = await this.#model.getUserModel().getUserByEmail(email)
+		if (user === null)
 			throw new Error(i18n_t('error.invalid_account_ident'));
-		const bcrypt = require('bcrypt');
-		const passwordValid = await bcrypt.compare(password, result[0].password);
+
+		const passwordValid = await this.#model.getUserModel().checkPassword(user, password)
 		if (! passwordValid)
 			throw new Error(i18n_t('error.invalid_account_ident'));
-		if (result[0].accountLocked)
+
+		if (user.accountLocked)
 			throw new Error('User account is locked');
+
 		return {
-			companyId: result[0].id_company,
-			userId: result[0].id,
-			email : result[0].email,
-			firstname: result[0].firstname,
-			lastname: result[0].lastname
+			userId: user.id,
+			companyId: user.companyId,
+			email : user.email,
+			firstname: user.firstname,
+			lastname: user.lastname
 		}
 	}
 

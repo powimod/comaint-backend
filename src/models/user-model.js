@@ -17,17 +17,21 @@
 
 'use strict'
 const assert = require('assert');
+const bcrypt = require('bcrypt');
 
 const userObjectHelper = require('../objects/user-object-helper.cjs')
 
 class UserModel {
-
+	static #config = null;
 	static #model = null;
 
-	static initialize = () => {
+	static initialize = (config) => {
 		assert(this.#model === null);
+		assert(config !== undefined)
+		this.#config = config;
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
 	}
 
 	static async getIdList(filters) {
@@ -94,7 +98,7 @@ class UserModel {
 			throw new Error(result.code);
 		const userList = [];
 		for (let userRecord of result) 
-			userList.push( userObjectHelper.convertUserFromDb(userRecord) );
+			userList.push( userObjectHelper.convertUserFromDb(userRecord), /*filter=*/true );
 		return userList;
 	}
 
@@ -111,18 +115,40 @@ class UserModel {
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const user = userObjectHelper.convertUserFromDb(result[0]);
+		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/false);
 		return user;
 	}
+
+	static async getUserByEmail(email) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		if (email === undefined)
+			throw new Error('Argument <email> required');
+		let sql = `SELECT * FROM users WHERE email = ?`;
+		const result = await db.query(sql, [email]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/ false);
+		return user;
+	}
+
 
 	static async createUser(user) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
+		// TODO pass i18n_t function to object helper
 		const error = userObjectHelper.controlObjectUser(user, /*fullCheck=*/true, /*checkId=*/false)
 		if ( error)
 			throw new Error(error)
 
+		// make a hash of the password
+		if (user.password === undefined || user.password === null)
+			throw new Error('User password missing')
+		await this.encryptPasswordIfPresent(user)
+		
 		const userDb = userObjectHelper.convertUserToDb(user)
 
 		const fieldNames = []
@@ -140,14 +166,12 @@ class UserModel {
 			INSERT INTO users(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
 		const userId = result.insertId;
-		user = this.getUserById(userId)
+		user = this.getUserById(userId) // to get all properties with defaults values
 		return user;
 	}
 
@@ -155,9 +179,12 @@ class UserModel {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
+		// TODO pass i18n_t function to object helper
 		const error = userObjectHelper.controlObjectUser(user, /*fullCheck=*/false, /*checkId=*/true)
 		if ( error)
 			throw new Error(error)
+
+		await this.encryptPasswordIfPresent(user)
 
 		const userDb = userObjectHelper.convertUserToDb(user)
 		const fieldNames = []
@@ -227,10 +254,26 @@ class UserModel {
 		return false
 	}
 
+	static async checkPassword(user, password) {
+		assert (user !== undefined)
+		assert (user.password !== undefined)
+		assert (password !== undefined)
+		const passwordValid = await bcrypt.compare(password, user.password);
+		return passwordValid
+	}
+
+	static async encryptPasswordIfPresent(user) {
+		assert (user !== undefined)
+		if (user.password === undefined) 
+			return
+		assert(this.#config.security.hashSalt !== undefined);
+		const saltRounds = this.#config.security.hashSalt;
+		user.password = await bcrypt.hash(user.password, saltRounds)
+	}
 }
 
-module.exports = () => {
-	UserModel.initialize();
+module.exports = (config) => {
+	UserModel.initialize(config);
 	return UserModel;
 }
 

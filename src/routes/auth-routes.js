@@ -27,22 +27,18 @@ exports.initialize = (app, authModel, View, config) => {
 	_authModel = authModel;
 
 	app.use( async (request, response, next) => {
-		console.log(`Cookie middleware : load access token for request ${request.url} ...`)
 		assert(_authModel !== null);
 		let userId = null;
 		let companyId = null;
 		const token = request.headers['x-access-token'];
-		if (token === undefined) {
-			console.log(`Cookie middleware -> access token absent (anonymous request)`)
-		}
-		else {
+		if (token !== undefined) {
 			try {
 				[userId, companyId] = await _authModel.checkAccessToken(token);
-				console.log(`Cookie middleware -> cookie userId = ${ userId }`);
-				console.log(`Cookie middleware -> cookie companyId = ${ companyId }`);
+				//console.log(`Cookie middleware -> cookie userId = ${ userId }`);
+				//console.log(`Cookie middleware -> cookie companyId = ${ companyId }`);
 			}
 			catch (error) {
-				console.log(`Cookie middleware -> cookie error : ${ error.message ? error.message : error }`)
+				//console.log(`Cookie middleware -> cookie error : ${ error.message ? error.message : error }`)
 				View.sendJsonError(response, error);
 				return;
 			}
@@ -57,22 +53,17 @@ exports.initialize = (app, authModel, View, config) => {
 			const email = request.body.email;
 			if (email === undefined)
 				throw new Error(`Can't find <email> in request body`);
-			// TODO control password complexity
+
 			const password = request.body.password;
 			if (password === undefined)
 				throw new Error(`Can't find <password> in request body`);
-			if (password.length < 8)
-				throw new Error(request.t('error.too_short_data', {'object': 'password'}));
-			if (password.length > 70)
-				throw new Error(request.t('error.too_long_data', {'object': 'password'}));
 
-			
+			// FIXME following tests should be done in UserModel with object helper control function
 			const firstname = request.body.firstname
 			if (firstname === undefined)
 				throw new Error('firstname not found in request body'); 
 			if (firstname.length === 0)
 				throw new Error(request.t('error.empty_data', {'object': 'firstname'}));
-			
 			const lastname = request.body.lastname
 			if (lastname === undefined)
 				throw new Error('lastname not found in request body'); 
@@ -214,22 +205,18 @@ exports.initialize = (app, authModel, View, config) => {
 			if (! tokenFound) {
 				// if a token is not found, it should be an attempt to usurp cookie :
 				// since a refresh token is deleted when used, it will not be found with a second attempt to use it.
-				console.log(`auth/refresh - detect an attempt to reuse a token : lock account userId = ${userId}`)
 				await _authModel.lockAccount(userId);
 				throw new Error('Attempt to reuse a token');
 			}
 
 			await _authModel.deleteRefreshToken(tokenId);
 
-			if (await _authModel.checkAccountLocked(userId)) {
-				console.log(`auth/refresh - account locked userId = ${userId}`)
+			if (await _authModel.checkAccountLocked(userId)) 
 				throw new Error('Account locked')
-			}
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId)
 			const newRefreshToken = await _authModel.generateRefreshToken(userId, companyId)
 
-			console.log(`auth/refresh - send new tokens to userId ${userId}`)
 			View.sendJsonResult(response, {
 				'userId' : userId,
 				'companyId': companyId,
