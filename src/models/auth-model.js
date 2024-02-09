@@ -142,8 +142,6 @@ class AuthModel {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		
-		// TODO  cleanup
-		// let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, park_role, stock_role, active, accountLocked FROM users WHERE email = ?`;
 		let sql = `SELECT id, email, password, account_locked, id_company, firstname, lastname, administrator, active, account_locked FROM users WHERE email = ?`;
 		const result = await db.query(sql, [ email ]);
 		if (result.code)
@@ -161,14 +159,7 @@ class AuthModel {
 			userId: result[0].id,
 			email : result[0].email,
 			firstname: result[0].firstname,
-			lastname: result[0].lastname,
-			/* TODO cleanup 
-			administrator: result[0].administrator,
-			parkRole: result[0].parkRole,
-			stockRole: result[0].stockRole,
-			active: result[0].active,
-			accountLocked: result[0].accountLocked,
-			*/
+			lastname: result[0].lastname
 		}
 	}
 

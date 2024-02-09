@@ -55,7 +55,6 @@ exports.initialize = (app, authModel, View, config) => {
 	app.post('/api/v1/auth/register', async (request, response) => {
 		try {
 			const email = request.body.email;
-			console.log(email) // TODO cleanup
 			if (email === undefined)
 				throw new Error(`Can't find <email> in request body`);
 			// TODO control password complexity
@@ -103,14 +102,6 @@ exports.initialize = (app, authModel, View, config) => {
 				companyId: companyId,
 				firstname : firstname,
 				lastname : lastname,
-				/* TODO cleanup
-				administrator : administrator,
-				parkRole : parkRole,
-				stockRole : stockRole,
-				active : active,
-				accountLocked : accountLocked,
-				email: email,
-				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
@@ -176,28 +167,6 @@ exports.initialize = (app, authModel, View, config) => {
 			if (lastname === undefined) 
 				throw new Error('lastname not found in HTTP response'); 
 			
-			/* TODO cleanup
-			const administrator = result.administrator
-			if (administrator === undefined) 
-				throw new Error('administrator not found in HTTP response'); 
-			
-			const parkRole = result.parkRole
-			if (parkRole === undefined) 
-				throw new Error('parkRole not found in HTTP response'); 
-			
-			const stockRole = result.stockRole
-			if (stockRole === undefined) 
-				throw new Error('stockRole not found in HTTP response'); 
-			
-			const active = result.active
-			if (active === undefined) 
-				throw new Error('active not found in HTTP response'); 
-			
-			const accountLocked = result.accountLocked
-			if (accountLocked === undefined) 
-				throw new Error('accountLocked not found in HTTP response'); 
-				*/
-			
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
 			const newRefreshToken = await _authModel.generateRefreshToken(userId, companyId);
@@ -207,14 +176,6 @@ exports.initialize = (app, authModel, View, config) => {
 				companyId: result.companyId,
 				firstname : firstname,
 				lastname : lastname,
-				/* TODO cleanup
-				administrator : administrator,
-				parkRole : parkRole,
-				stockRole : stockRole,
-				active : active,
-				accountLocked : accountLocked,
-				email: result.email,
-				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
