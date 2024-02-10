@@ -261,7 +261,6 @@ exports.initialize = (app, authModel, View, config) => {
 			const user = await _authModel.storeUnlockAccountCode(userId, validationCode, request.t);
 			await _authModel.sendUnlockAccountValidationCode(validationCode, user.email, request.t);
 
-			delete user.password
 			const message = request.t('unlock_account.mail_sent_info', { email: user.email })
 			View.sendJsonResult(response, {message})
 		}
@@ -289,6 +288,63 @@ exports.initialize = (app, authModel, View, config) => {
 			const isValid = await _authModel.unlockAccount(userId, validationCode, request.t);
 
 			View.sendJsonResult(response, {isValid})
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+	app.post('/api/v1/auth/forgotten-password/send-code', async (request, response) => {
+		try {
+			let email = request.body.email;
+			if (email === undefined)
+				throw new Error(`Can't find <email> in request body`);
+			email = email.trim()
+			if (email.length === 0)
+				throw new Error(request.t('error.invalid_data', {'object': 'email'}));
+			
+			const validationCode = _authModel.generateValidationCode();
+			console.log(`Password reset validation code is ${ validationCode }`); // TODO remove this
+
+			await _authModel.storeForgottenPasswordCode(email, validationCode, request.t);
+			await _authModel.sendForgottenPasswordValidationCode(validationCode, email, request.t);
+
+			const message = request.t('forgotten_password.mail_sent_info', { email })
+			View.sendJsonResult(response, {message})
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+	app.post('/api/v1/auth/forgotten-password/change-password', async (request, response) => {
+		try {
+			let email = request.body.email;
+			if (email === undefined)
+				throw new Error(`Can't find <email> in request body`);
+			email = email.trim()
+			if (email.length === 0)
+				throw new Error(request.t('error.invalid_data', {'object': 'email'}));
+			
+			let validationCode = request.body.validationCode;
+			if (validationCode === undefined)
+				throw new Error(`Can't find <validationCode> in request body`);
+			if (isNaN(validationCode))
+				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
+			validationCode = parseInt(validationCode);
+			if (validationCode < 10000 || validationCode > 99999)
+				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
+
+			let newPassword = request.body.newPassword;
+			if (newPassword === undefined)
+				throw new Error(`Can't find <newPassword> in request body`);
+			newPassword = newPassword.trim();
+
+			const changed = await _authModel.changePassword(email, validationCode, newPassword, request.t);
+
+			View.sendJsonResult(response, {changed})
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

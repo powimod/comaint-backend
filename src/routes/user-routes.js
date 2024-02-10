@@ -106,6 +106,8 @@ module.exports = (app, UserModel, View) => {
 			const user = request.body.user
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`)
+			if (user.password !== undefined)
+				throw new Error(`Using this route to change user password is forbidden`)
 			let editedUser = await UserModel.editUser(user)
 			if (editedUser.id !== user.id)
 				throw new Error(`Edited User ID does not match`)

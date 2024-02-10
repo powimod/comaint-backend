@@ -47,5 +47,10 @@
 		"mail_body": "Bonjour,\nLe code pour débloquer votre compte est {{code}}.\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message",
 		"mail_title": "Déblocage de compte Comaint",
 		"mail_sent_info": "Le code de déblocage a été envoyé à l'adresse mail {{email}}"
+	},
+	"forgotten_password": {
+		"mail_body": "Bonjour,\nLe code pour réinitialiser votre mot de passe est {{code}}.\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message",
+		"mail_title": "Mot de passe oublié pour un compte Comaint",
+		"mail_sent_info": "Un code de réinitialisation du mot de passe a été envoyé à l'adresse mail {{email}}"
 	}
 }
