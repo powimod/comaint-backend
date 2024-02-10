@@ -12,6 +12,7 @@
 		"account_not_locked": "Le compte n'est pas verrouillé",
 		"account_not_found": "Ce compte n'existe pas",
 		"invalid_account_ident": "email inconnu ou password incorrect",
+		"invalid_account_id": "Identifiant de compte inconnu",
 		"prop": {
 			"is_not_defined": "La propriété {{property}} n'est pas définie",
 			"is_null": "La propriété {{property}} est vide",
@@ -39,7 +40,12 @@
 	},
 	"register": {
 		"account_already_exists" : "Un compte avec cet email existe déjà",
-		"mail_body": "Bonjour,\nVotre code pour la création d'un compte vaut {{code}}.\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message",
+		"mail_body": "Bonjour,\nVotre code pour la création d'un compte est {{code}}.\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message",
 		"mail_title": "Enregistrement Comaint"
+	},
+	"unlock_account": {
+		"mail_body": "Bonjour,\nLe code pour débloquer votre compte est {{code}}.\nSi vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message",
+		"mail_title": "Déblocage de compte Comaint",
+		"mail_sent_info": "Le code de déblocage a été envoyé à l'adresse mail {{email}}"
 	}
 }

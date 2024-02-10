@@ -48,7 +48,7 @@ exports.initialize = (app, authModel, View, config) => {
 		next();
 	});
 
-	app.post('/api/v1/auth/register', async (request, response) => {
+	app.post('/api/v1/auth/register', async (request, response) => { 
 		try {
 			const email = request.body.email;
 			if (email === undefined)
@@ -74,6 +74,7 @@ exports.initialize = (app, authModel, View, config) => {
 			const validationCode = _authModel.generateValidationCode();
 			console.log(`Validation code is ${ validationCode }`); // TODO remove this
 
+
 			const result = await _authModel.register(email, password, firstname, lastname, validationCode, request.t);
 
 			const userId = result.userId;
@@ -86,7 +87,7 @@ exports.initialize = (app, authModel, View, config) => {
 			if (companyId === null)
 				throw new Error('companyId is null')
 
-			await _authModel.sendValidationCode(validationCode, email, request.t);
+			await _authModel.sendRegisterValidationCode(validationCode, email, request.t);
 
 			// generate access and refresh tokens
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
@@ -244,8 +245,55 @@ exports.initialize = (app, authModel, View, config) => {
 			console.error("auth/refresh - error:", (error.message) ? error.message : error)
 			View.sendJsonError(response, error);
 		}
-	});
+	})
 
+
+	app.post('/api/v1/auth/locked-account/send-code', async (request, response) => {
+		try {
+			const userId = request.userId
+			if (request.userId === null)
+				throw new Error(`User not connected`);
+			assert (! isNaN(userId))
+			
+			const validationCode = _authModel.generateValidationCode();
+			console.log(`Unlock account validation code is ${ validationCode }`); // TODO remove this
+
+			const user = await _authModel.storeUnlockAccountCode(userId, validationCode, request.t);
+			await _authModel.sendUnlockAccountValidationCode(validationCode, user.email, request.t);
+
+			delete user.password
+			const message = request.t('unlock_account.mail_sent_info', { email: user.email })
+			View.sendJsonResult(response, {message})
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+	app.post('/api/v1/auth/locked-account/validate-code', async (request, response) => {
+		try {
+			const userId = request.userId
+			if (request.userId === null)
+				throw new Error(`User not connected`);
+			assert (! isNaN(userId))
+
+			let validationCode = request.body.validationCode;
+			if (validationCode === undefined)
+				throw new Error(`Can't find <validationCode> in request body`);
+			if (isNaN(validationCode))
+				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
+			validationCode = parseInt(validationCode);
+			if (validationCode < 10000 || validationCode > 99999)
+				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
+
+			const isValid = await _authModel.unlockAccount(userId, validationCode, request.t);
+
+			View.sendJsonResult(response, {isValid})
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
 
 }
 

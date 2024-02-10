@@ -44,7 +44,7 @@ class AuthModel {
 		return parseInt(Math.random() * (maximum - minimum) + minimum);
 	}
 
-	static async sendValidationCode(code, email, i18n_t) {
+	static async sendRegisterValidationCode(code, email, i18n_t) {
 		const subject = i18n_t('register.mail_title')
 		const textBody = i18n_t('register.mail_body', { 'code' : code })
 		const htmlBody = i18n_t('register.mail_body', { 'code' : `<b>${code}</b>code` })
@@ -56,6 +56,20 @@ class AuthModel {
 				this.#config.mail
 		); 
 	}
+
+	static async sendUnlockAccountValidationCode(code, email, i18n_t) {
+		const subject = i18n_t('unlock_account.mail_title')
+		const textBody = i18n_t('unlock_account.mail_body', { 'code' : code })
+		const htmlBody = i18n_t('unlock_account.mail_body', { 'code' : `<b>${code}</b>code` })
+		return await util.sendMail(
+				email,
+				subject,
+				textBody,
+				htmlBody,
+				this.#config.mail
+		); 
+	}
+
 
 	static async register(email, password, firstname, lastname, validationCode, i18n_t) {
 		assert(email !== undefined);
@@ -190,6 +204,7 @@ class AuthModel {
 		assert(companyId !== undefined);
 
 
+		// TODO use tokenModel
 		let sql = 'DELETE FROM tokens WHERE id = ?';
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -216,6 +231,7 @@ class AuthModel {
 		assert (this.#config.security.refreshTokenLifespan !== undefined);
 		const refreshTokenLifespan = this.#config.security.refreshTokenLifespan;
 		const expirationDate = new Date (Date.now() + refreshTokenLifespan * 86400000); // 24 hours in ms
+		// TODO use tokenModel
 		const sqlRequest = 'INSERT INTO tokens(id_user, expires_at) VALUES (?, ?)';
 		const sqlParams = [
 			userId,
@@ -292,6 +308,7 @@ class AuthModel {
 		assert(userId !== undefined);
 		assert(companyId !== undefined);
 
+		// TODO use tokenModel
 		const sqlRequest = 'SELECT id FROM tokens WHERE id = ?';
 		const sqlParams = [ tokenId ];
 		const result = await db.query(sqlRequest, sqlParams);
@@ -307,6 +324,7 @@ class AuthModel {
 	static async deleteRefreshToken(tokenId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
+		// TODO use tokenModel
 		const sqlRequest = 'DELETE FROM tokens WHERE id = ?';
 		const sqlParams = [ tokenId ];
 		const result = await db.query(sqlRequest, sqlParams);
@@ -316,6 +334,7 @@ class AuthModel {
 	static async checkAccountLocked(userId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
+		// TODO use UserModel
 		const sqlRequest = 'SELECT account_locked FROM users WHERE id= ?';
 		const sqlParams = [ userId ];
 		const result = await db.query(sqlRequest, sqlParams);
@@ -331,6 +350,7 @@ class AuthModel {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		// lock account
+		// TODO use UserModel
 		let sqlRequest = 'UPDATE users SET account_locked = ? WHERE id= ?';
 		let sqlParams = [ true, userId ];
 		let result = await db.query(sqlRequest, sqlParams);
@@ -339,9 +359,45 @@ class AuthModel {
 		if (result.affectedRows=== 0) 
 			throw new Error('User not found');
 		// remove existing User tokens
+		// TODO use tokenModel
 		sqlRequest = 'DELETE FROM tokens WHERE id_user = ?';
 		sqlParams = [ userId ];
 		result = await db.query(sqlRequest, sqlParams);
+	}
+
+	static async storeUnlockAccountCode(userId, validationCode, i18n_t) {
+		assert(userId !== undefined)
+		assert(validationCode !== undefined)
+		assert(i18n_t !== undefined)
+		assert(this.#model !== null);
+		let user = await this.#model.getUserModel().getUserById(userId)
+		if (user === null)
+			throw new Error(i18n_t('error.invalid_account_id'));
+		if (! user.accountLocked)
+			throw new Error(i18n_t('error.account_not_locked'));
+		user.validationCode= validationCode
+		await this.#model.getUserModel().editUser(user)
+		return user
+	}
+
+	static async unlockAccount(userId, validationCode, i18n_t) {
+		assert(userId !== undefined)
+		assert(validationCode !== undefined)
+		assert(i18n_t !== undefined)
+		assert(this.#model !== null);
+		let user = await this.#model.getUserModel().getUserById(userId)
+		if (user === null)
+			throw new Error(i18n_t('error.invalid_account_id'));
+		if (! user.accountLocked)
+			throw new Error(i18n_t('error.account_not_locked'));
+		assert(user.validationCode !== undefined)
+		const isValid = (validationCode === user.validationCode)
+		if (isValid) {
+			user.accountLocked = false
+			user.validationCode = 0
+			await this.#model.getUserModel().editUser(user)
+		}
+		return isValid
 	}
 
 	static async getContext(userId) {
@@ -349,6 +405,7 @@ class AuthModel {
 		assert(userId !== null)
 		assert(this.#model !== null);
 		const db = this.#model.db;
+		// TODO use UserModel
 		let sqlRequest = `
 			SELECT id,  email,firstname, lastname, administrator, park_role, stock_role, active, account_locked, id_company
 			FROM users 
