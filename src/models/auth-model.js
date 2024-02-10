@@ -44,7 +44,7 @@ class AuthModel {
 		return parseInt(Math.random() * (maximum - minimum) + minimum);
 	}
 
-	static async sendValidationCode(code, email, i18n_t) {
+	static async sendRegisterValidationCode(code, email, i18n_t) {
 		const subject = i18n_t('register.mail_title')
 		const textBody = i18n_t('register.mail_body', { 'code' : code })
 		const htmlBody = i18n_t('register.mail_body', { 'code' : `<b>${code}</b>code` })
@@ -56,6 +56,20 @@ class AuthModel {
 				this.#config.mail
 		); 
 	}
+
+	static async sendUnlockAccountValidationCode(code, email, i18n_t) {
+		const subject = i18n_t('unlock_account.mail_title')
+		const textBody = i18n_t('unlock_account.mail_body', { 'code' : code })
+		const htmlBody = i18n_t('unlock_account.mail_body', { 'code' : `<b>${code}</b>code` })
+		return await util.sendMail(
+				email,
+				subject,
+				textBody,
+				htmlBody,
+				this.#config.mail
+		); 
+	}
+
 
 	static async register(email, password, firstname, lastname, validationCode, i18n_t) {
 		assert(email !== undefined);
@@ -357,25 +371,25 @@ class AuthModel {
 		assert(i18n_t !== undefined)
 		assert(this.#model !== null);
 		let user = await this.#model.getUserModel().getUserById(userId)
-		if (user != null)
-			throw new Error(i18n_t('unknown_user_id')); // TODO issue-7
+		if (user === null)
+			throw new Error(i18n_t('error.invalid_account_id'));
 		if (! user.accountLocked)
-			throw new Error(i18n_t('account_is_not_locked')); // TODO issue-7
-		user.validationCode = validationCode
+			throw new Error(i18n_t('error.account_not_locked'));
+		user.validationCode= validationCode
 		await this.#model.getUserModel().editUser(user)
 		return user
 	}
 
-	static async validateUnlockAccountCode(userId, validationCode, i18n_t) {
+	static async unlockAccount(userId, validationCode, i18n_t) {
 		assert(userId !== undefined)
 		assert(validationCode !== undefined)
 		assert(i18n_t !== undefined)
 		assert(this.#model !== null);
 		let user = await this.#model.getUserModel().getUserById(userId)
-		if (user != null)
-			throw new Error(i18n_t('unknown_user_id')); // TODO issue-7
+		if (user === null)
+			throw new Error(i18n_t('error.invalid_account_id'));
 		if (! user.accountLocked)
-			throw new Error(i18n_t('account_is_not_locked')); // TODO issue-7
+			throw new Error(i18n_t('error.account_not_locked'));
 		assert(user.validationCode !== undefined)
 		const isValid = (validationCode === user.validationCode)
 		if (isValid) {
