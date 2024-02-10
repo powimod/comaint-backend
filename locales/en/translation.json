@@ -47,5 +47,10 @@
 		"mail_body": "Hello,\nValidation code to unlock your account is {{code}}.\nIf your are not the initiator of this request, simply ignore this message",
 		"mail_title": "Comaint account unlock",
 		"mail_sent_info": "Unlock code has been sent to {{email}}"
+	},
+	"forgotten_password": {
+		"mail_body": "Hello,\nValidation code to reset your password is {{code}}.\nIf your are not the initiator of this request, simply ignore this message",
+		"mail_title": "Comaint password reset",
+		"mail_sent_info": "Password reset code has been sent to {{email}}"
 	}
 }

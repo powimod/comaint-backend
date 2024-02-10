@@ -70,6 +70,20 @@ class AuthModel {
 		); 
 	}
 
+	static async sendForgottenPasswordValidationCode(code, email, i18n_t) {
+		const subject = i18n_t('forgotten_password.mail_title')
+		const textBody = i18n_t('forgotten_password.mail_body', { 'code' : code })
+		const htmlBody = i18n_t('forgotten_password.mail_body', { 'code' : `<b>${code}</b>code` })
+		return await util.sendMail(
+				email,
+				subject,
+				textBody,
+				htmlBody,
+				this.#config.mail
+		); 
+	}
+
+
 
 	static async register(email, password, firstname, lastname, validationCode, i18n_t) {
 		assert(email !== undefined);
@@ -399,6 +413,43 @@ class AuthModel {
 		}
 		return isValid
 	}
+
+
+	static async storeForgottenPasswordCode(email, validationCode, i18n_t) {
+		assert(email!== undefined)
+		assert(validationCode !== undefined)
+		assert(i18n_t !== undefined)
+		assert(this.#model !== null);
+		let user = await this.#model.getUserModel().getUserByEmail(email)
+		if (user === null)
+			throw new Error(i18n_t('error.invalid_account_id'));
+		user.validationCode = validationCode
+		await this.#model.getUserModel().editUser(user)
+		return user
+	}
+
+	// TODO issue-9
+	static async changePassword(email, validationCode, newPassword, i18n_t) {
+		assert(email !== undefined)
+		assert(validationCode !== undefined)
+		assert(newPassword !== undefined)
+		assert(i18n_t !== undefined)
+		assert(this.#model !== null);
+		let user = await this.#model.getUserModel().getUserByEmail(email)
+		if (user === null)
+			throw new Error(i18n_t('error.invalid_account_id'));
+		assert(user.validationCode !== undefined)
+		const isValid = (validationCode === user.validationCode)
+		if (isValid) {
+			console.log('Validation code is OK')
+			user.validationCode = 0
+			user.password = newPassword // editUser function will encrypt password
+			await this.#model.getUserModel().editUser(user)
+			console.log('Password changed')
+		}
+		return isValid
+	}
+
 
 	static async getContext(userId) {
 		assert(userId !== undefined)
