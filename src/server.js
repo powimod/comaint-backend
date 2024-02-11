@@ -16,15 +16,21 @@
 
 'use strict';
 
+const assert = require('assert')
+const { read } = require('read')
 const fs = require("fs")
 const {join} = require('path')
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const Backend = require('i18next-fs-backend');
 
+const {controlPropertyEmail, controlPropertyPassword} = require('./objects/user-object-helper.cjs')
+
 function loadConfig()
 {
-	const configFile = './config.json';
+	const configFile = join(__dirname, '..', 'config.json')
+	if (! fs.existsSync(configFile)) 
+		throw new Error(`Configuration file does not exist : ${configFile}`);
 	console.log(`Loading configuration file ${configFile}`);
 	const nconf = require('nconf');
 	nconf.argv()
@@ -78,6 +84,70 @@ function loadConfig()
 	return config;
 }
 
+async function declareAdminAccount(model) {
+	assert(model !== undefined)
+	const authModel = model.getAuthModel()
+	console.log("\nDatabase does not contain an administrator account. It's time to create one...")
+
+	let email, password, confirmPassword
+	while (true) {
+		email = ''
+		password = ''
+		confirmPassword = ''
+
+		const administratorCount = await authModel.findAdministratorCount()
+		if (administratorCount > 0)
+			break
+
+		while (email.length === 0) {
+			let input = await read({ prompt: 'Administrator email : ' })
+			input = input.trim()
+			if (input === "")
+				return false
+			let control = controlPropertyEmail(input)
+			if (control) {
+				console.log(`\nInvalid email (${control}) !\n`)
+				continue
+			}
+			email = input 
+		}
+
+		while (password.length === 0) {
+			let input = await read({ prompt: "Administrator password : ", silent: true, replace: "*" })
+			input = input.trim()
+			let control = controlPropertyPassword(input)
+			if (control) {
+				console.log(`\nInvalid password (${control}) !\n`)
+				continue
+			}
+			password = input
+		}
+
+		while (confirmPassword.length === 0) {
+			let input = await read({ prompt: "Confirm password : ", silent: true, replace: "*" })
+			input = input.trim()
+			let control = controlPropertyPassword(input)
+			if (control) {
+				console.log(`\nInvalid password (${control}) !\n`)
+				continue
+			}
+			confirmPassword = input
+		}
+
+		if (password != confirmPassword) {
+			console.log("Passwords do not match !!!")
+			continue
+		}
+
+		try {
+			await authModel.createAdministratorAccount(email, password)
+		}
+		catch (error) {
+			console.log('Can not create administrator account', error.message ? error.message : error)
+		}
+	}
+	return true
+}
 
 async function main()
 {
@@ -118,12 +188,17 @@ async function main()
 	let controller = ControllerSingleton.getInstance();
 	controller.initialize(config, model, view);
 
+	if (! await declareAdminAccount(model))
+		throw new Error('No administrator present in database account')
+
 	await controller.run();
 }
 
 main()
+/* TODO issue-11
 .catch(error =>{
 	const message = (error.message) ? error.message : error;
 	console.error(`Error : ${message}`);
 	process.exit(1);
 })
+*/
