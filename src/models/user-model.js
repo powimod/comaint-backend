@@ -57,6 +57,29 @@ class UserModel {
 		return idList;
 	}
 
+	static async findUserCount(filters) {
+		assert(filters !== undefined);
+		assert(this.#model !== null);
+		const db = this.#model.db;
+
+		const sqlValues = [];
+		const sqlFilters = [];
+		if (filters.companyId !== undefined) {
+			sqlFilters.push('id_company = ?')
+			sqlValues.push(filters.companyId)
+		}
+		if (filters.administrator !== undefined) {
+			sqlFilters.push('administrator = ?')
+			sqlValues.push(filters.administrator)
+		}
+		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
+
+		let sql = `SELECT COUNT(id) as counter FROM users ${whereClause}`
+		const result = await db.query(sql, sqlValues)
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].counter;
+	}
 
 	static async getList(filters, params) {
 		assert(filters !== undefined);
@@ -202,9 +225,6 @@ class UserModel {
 			WHERE id = ?
 		`
 		sqlParams.push(user.id) // WHERE clause
-
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)

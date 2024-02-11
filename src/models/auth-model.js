@@ -428,7 +428,6 @@ class AuthModel {
 		return user
 	}
 
-	// TODO issue-9
 	static async changePassword(email, validationCode, newPassword, i18n_t) {
 		assert(email !== undefined)
 		assert(validationCode !== undefined)
@@ -458,7 +457,7 @@ class AuthModel {
 		const db = this.#model.db;
 		// TODO use UserModel
 		let sqlRequest = `
-			SELECT id,  email,firstname, lastname, administrator, park_role, stock_role, active, account_locked, id_company
+			SELECT id, email, firstname, lastname, administrator, park_role, stock_role, active, account_locked, id_company
 			FROM users 
 			WHERE id = ?;`;
 		let sqlParams = [
@@ -485,6 +484,28 @@ class AuthModel {
 			companyId: result[0].id_company
 		}
 		return context
+	}
+
+
+	static async findAdministratorCount() {
+		const userModel = await this.#model.getUserModel()
+		return userModel.findUserCount( {
+			'administrator': true
+		})
+	}
+
+	static async createAdministratorAccount(email, password) {
+		assert(email !== undefined)
+		assert(password!== undefined)
+		const administrator = true
+		const userModel = await this.#model.getUserModel()
+		return userModel.createUser({ 
+			email: email, 
+			password: password, 
+			administrator : true,
+			firstname: 'Comaint',
+			lastname: 'Administrator'
+		})
 	}
 
 }
