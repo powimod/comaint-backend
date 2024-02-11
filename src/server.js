@@ -24,7 +24,9 @@ const Backend = require('i18next-fs-backend');
 
 function loadConfig()
 {
-	const configFile = './config.json';
+	const configFile = join(__dirname, '..', 'config.json')
+	if (! fs.existsSync(configFile)) 
+		throw new Error(`Configuration file does not exist : ${configFile}`);
 	console.log(`Loading configuration file ${configFile}`);
 	const nconf = require('nconf');
 	nconf.argv()
