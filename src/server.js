@@ -87,7 +87,6 @@ function loadConfig()
 async function declareAdminAccount(model) {
 	assert(model !== undefined)
 	const authModel = model.getAuthModel()
-	console.log("\nDatabase does not contain an administrator account. It's time to create one...")
 
 	let email, password, confirmPassword
 	while (true) {
@@ -98,6 +97,8 @@ async function declareAdminAccount(model) {
 		const administratorCount = await authModel.findAdministratorCount()
 		if (administratorCount > 0)
 			break
+
+		console.log("\nDatabase does not contain an administrator account. It's time to create one...\n")
 
 		while (email.length === 0) {
 			let input = await read({ prompt: 'Administrator email : ' })
