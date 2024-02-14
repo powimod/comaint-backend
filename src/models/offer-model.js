@@ -107,6 +107,45 @@ class OfferModel {
 		return offer;
 	}
 
+	static async getChildrenCountList(idOffer) {
+		if (idOffer === undefined)
+			throw new Error('Argument <idOffer> required');
+		if (isNaN(idOffer) === undefined)
+			throw new Error('Argument <idOffer> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+
+		const childrenCounterList = {}
+
+		let sql = `
+			SELECT COUNT(id) AS counter 
+			FROM subscriptions 
+			WHERE id_offer = ?
+			`
+		let result = await db.query(sql, [idOffer]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['subscriptions'] = result[0].counter
+
+		sql = `
+			SELECT COUNT(companies.id) AS counter
+			FROM subscriptions INNER JOIN companies 
+				ON subscriptions.id_company = companies.id 
+			WHERE id_offer = ?
+			`
+		result = await db.query(sql, [idOffer]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['companies'] = result[0].counter
+
+		return childrenCounterList;
+	}
+
+
 	static async createOffer(offer) {
 		assert(this.#model !== null);
 		const db = this.#model.db;

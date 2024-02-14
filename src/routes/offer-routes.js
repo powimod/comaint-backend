@@ -67,6 +67,27 @@ module.exports = (app, OfferModel, View) => {
 		}
 	});
 
+
+	app.get('/api/v1/offer/:offerId/children-count', withAuth, async (request, response) => {
+		let offerId = request.params.offerId;
+		assert (offerId !== undefined);
+		if (isNaN(offerId)) {
+			View.sendJsonError(response, `Offer ID <${ offerId}> is not a number`);
+			return;
+		}
+		offerId = parseInt(offerId);
+		try {
+			const childrenCountList = await OfferModel.getChildrenCountList(offerId);
+			if (childrenCountList === null)
+				throw new Error(`Offer ID <${ offerId }> not found`);
+			View.sendJsonResult(response, { childrenCountList } );
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
 	app.post('/api/v1/offer/create', withAuth, async (request, response) => {
 		try {
 			const offer = request.body.offer;
