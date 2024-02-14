@@ -75,11 +75,10 @@ module.exports = (app, OfferModel, View) => {
 			let newOffer = await OfferModel.createOffer(offer);
 			if (newOffer.id === undefined)
 				throw new Error(`Can't find ID of newly created Offer`);
-			response.json({ ok: true, offer : newOffer });
+			View.sendJsonResult(response, { offer : newOffer } );
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error;
-			response.json({ ok : false, error: errorMessage  });
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -91,11 +90,10 @@ module.exports = (app, OfferModel, View) => {
 			let editedOffer = await OfferModel.editOffer(offer)
 			if (editedOffer.id !== offer.id)
 				throw new Error(`Edited Offer ID does not match`)
-			response.json({ ok: true, offer : editedOffer })
+			View.sendJsonResult(response, { offer : editedOffer } );
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error
-			response.json({ ok : false, error: errorMessage  })
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -127,7 +125,6 @@ module.exports = (app, OfferModel, View) => {
 			View.sendJsonError(response, error);
 		}
 	});
-
 
 }
 

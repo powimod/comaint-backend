@@ -154,7 +154,7 @@ class OfferModel {
 		const offerDb = offerObjectHelper.convertOfferToDb(offer)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(userDb)) {
+		for (let [propName, propValue] of Object.entries(offerDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)

@@ -92,12 +92,10 @@ module.exports = (app, UserModel, View) => {
 				throw new Error(`Can't find ID of newly created User`);
 			delete newUser.password
 			// TODO should use View.sendJsonResult
-			response.json({ ok: true, user : newUser });
+			View.sendJsonResult(response, { user: newUser} );
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error;
-			// TODO should use View.sendJsonError
-			response.json({ ok : false, error: errorMessage  });
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -111,11 +109,10 @@ module.exports = (app, UserModel, View) => {
 			let editedUser = await UserModel.editUser(user)
 			if (editedUser.id !== user.id)
 				throw new Error(`Edited User ID does not match`)
-			response.json({ ok: true, user : editedUser })
+			View.sendJsonResult(response, { user: editedUser} );
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error
-			response.json({ ok : false, error: errorMessage  })
+			View.sendJsonError(response, error);
 		}
 	});
 
