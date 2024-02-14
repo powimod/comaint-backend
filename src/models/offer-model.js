@@ -28,6 +28,7 @@ class OfferModel {
 		assert(this.#model === null);
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
 	}
 
 	static async getIdList(filters) {
@@ -89,6 +90,19 @@ class OfferModel {
 			offerList.push( offerObjectHelper.convertOfferFromDb(offerRecord) );
 		return offerList;
 	}
+
+
+	static async getCount() {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql = `SELECT COUNT(id) AS counter FROM offers`;
+		const result = await db.query(sql);
+		if (result.code) 
+			throw new Error(result.code);
+		return result[0].counter;
+	}
+
+
 
 	static async getOfferById(idOffer) {
 		assert(this.#model !== null);
@@ -237,6 +251,7 @@ class OfferModel {
 			throw new Error(result.code);
 		return (result.affectedRows !== 0) 
 	}
+
 	static async getSubscriptionCount(offerId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -257,6 +272,42 @@ class OfferModel {
 			return true
 		return false
 	}
+
+	static async createOffer(offer) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+
+		// TODO pass i18n_t function to object helper
+		const error = offerObjectHelper.controlObjectOffer(offer, /*fullCheck=*/true, /*checkId=*/false)
+		if ( error)
+			throw new Error(error)
+
+		const offerDb = offerObjectHelper.convertOfferToDb(offer)
+
+		const fieldNames = []
+		const markArray = []
+		const sqlParams = []
+		for (let [propName, propValue] of Object.entries(offerDb)) {
+			if (propValue === undefined)
+				continue
+			fieldNames.push(propName)
+			sqlParams.push(propValue)
+			markArray.push('?')
+		}
+
+		const sqlRequest = `
+			INSERT INTO offers(${fieldNames.join(', ')}) 
+			       VALUES (${markArray.join(', ')});
+		`;
+		
+		const result = await db.query(sqlRequest, sqlParams);
+		if (result.code)
+			throw new Error(result.code);
+		const offerId = result.insertId;
+		offer = this.getOfferById(offerId) // to get all properties with defaults values
+		return offer;
+	}
+
 
 }
 

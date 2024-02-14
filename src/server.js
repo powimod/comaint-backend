@@ -24,7 +24,7 @@ const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const Backend = require('i18next-fs-backend');
 
-const {controlPropertyEmail, controlPropertyPassword} = require('./objects/user-object-helper.cjs')
+const {controlPropertyTitle, controlPropertyDescription} = require('./objects/offer-object-helper.cjs')
 
 function loadConfig()
 {
@@ -150,6 +150,64 @@ async function declareAdminAccount(model) {
 	return true
 }
 
+async function declareFirstSubscriptionOffer(model)
+{
+	assert(model !== undefined)
+	const offerModel = model.getOfferModel()
+
+	let offer = {} 
+	while (true) {
+
+		const offerCount = await offerModel.getCount()
+		if (offerCount > 0)
+			break
+
+		console.log("\nDatabase does not contain a subscription offer. It's time to create one...\n")
+
+		while (offer.title === undefined) {
+			let input = await read({ prompt: 'Offer title : ' })
+			input = input.trim()
+			if (input === "")
+				return false
+
+			let control = controlPropertyTitle(input)
+			if (control) {
+				console.log(`\nInvalid title (${control}) !\n`)
+				continue
+			}
+			offer.title = input 
+		}
+
+		while (offer.description === undefined) {
+			let input = await read({ prompt: 'Offer description : ' })
+			input = input.trim()
+			if (input === "")
+				return false
+			let control = controlPropertyDescription(input)
+			if (control) {
+				console.log(`\nInvalid description  (${control}) !\n`)
+				continue
+			}
+			offer.description = input 
+		}
+
+
+		offer.active = true
+
+		try {
+			await offerModel.createOffer(offer)
+		}
+		catch (error) {
+			console.log('Can not create subscription offer : ', error.message ? error.message : error)
+			return false
+		}
+	}
+	console.log("\nFirst offer has been created with no limitiation : edit it as soon as possible !\n")
+
+	return true
+
+}
+
 async function main()
 {
 	const localesDir = join(__dirname, '..', 'locales')
@@ -191,6 +249,8 @@ async function main()
 
 	if (! await declareAdminAccount(model))
 		throw new Error('No administrator present in database account')
+	if (! await declareFirstSubscriptionOffer(model))
+		throw new Error('No subscription offer present in database account')
 
 	await controller.run();
 }
