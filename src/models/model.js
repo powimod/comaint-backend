@@ -114,7 +114,6 @@ class Model {
 		this.#CompanyModel      = require('./company-model.js')()
 		this.#TokenModel        = require('./token-model.js')()
 		this.#UnitModel         = require('./unit-model.js')()
-		
 	}
 
 	getAuthModel() {
