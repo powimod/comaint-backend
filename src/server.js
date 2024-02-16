@@ -196,13 +196,13 @@ async function declareFirstSubscriptionOffer(model)
 
 		try {
 			await offerModel.createOffer(offer)
+			console.log("\nFirst offer has been created with no limitiation : edit it as soon as possible !\n")
 		}
 		catch (error) {
 			console.log('Can not create subscription offer : ', error.message ? error.message : error)
 			return false
 		}
 	}
-	console.log("\nFirst offer has been created with no limitiation : edit it as soon as possible !\n")
 
 	return true
 
