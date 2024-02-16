@@ -19,7 +19,8 @@
 const assert = require('assert');
 const bcrypt = require('bcrypt');
 
-const userObjectHelper = require('../objects/user-object-helper.cjs')
+const { userObjectDef } = require('../objects/user-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class UserModel {
 	static #config = null;
@@ -76,10 +77,11 @@ class UserModel {
 
 		let sql = `SELECT COUNT(id) as counter FROM users ${whereClause}`
 		const result = await db.query(sql, sqlValues)
-		if (result.code) 
+		if (result.code)
 			throw new Error(result.code)
 		return result[0].counter;
 	}
+
 
 	static async getList(filters, params) {
 		assert(filters !== undefined);
@@ -120,8 +122,11 @@ class UserModel {
 		if (result.code) 
 			throw new Error(result.code);
 		const userList = [];
-		for (let userRecord of result) 
-			userList.push( userObjectHelper.convertUserFromDb(userRecord), /*filter=*/true );
+		for (let userRecord of result) {
+			// TODO migration userList.push( userObjectHelper.convertUserFromDb(userRecord), /*filter=*/true );
+			const user = objectUtils.convertObjectFromDb(userObjectDef, result[0], /*filter=*/true);
+			userList.push( user )
+		}
 		return userList;
 	}
 
@@ -138,7 +143,8 @@ class UserModel {
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/false);
+		const user = objectUtils.convertObjectFromDb(userObjectDef, result[0], /*filter=*/false);
+		// TODO migration const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/false);
 		return user;
 	}
 
@@ -153,7 +159,8 @@ class UserModel {
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/ false);
+		const user = objectUtils.convertObjectFromDb(userObjectDef, result[0], /*filter=*/false);
+		//const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/ false);
 		return user;
 	}
 
@@ -194,7 +201,7 @@ class UserModel {
 		if (result.code)
 			throw new Error(result.code);
 		const userId = result.insertId;
-		user = this.getUserById(userId) // to get all properties with defaults values
+		user = this.getUserById(userId)
 		return user;
 	}
 
@@ -278,13 +285,13 @@ class UserModel {
 		assert (user !== undefined)
 		assert (user.password !== undefined)
 		assert (password !== undefined)
-		const passwordValid = await bcrypt.compare(password, user.password);
-		return passwordValid
+		const isValid = await bcrypt.compare(password, user.password);
+		return isValid
 	}
 
 	static async encryptPasswordIfPresent(user) {
 		assert (user !== undefined)
-		if (user.password === undefined) 
+		if (user.password === undefined)
 			return
 		assert(this.#config.security.hashSalt !== undefined);
 		const saltRounds = this.#config.security.hashSalt;
