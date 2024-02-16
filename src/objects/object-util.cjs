@@ -234,9 +234,66 @@ const diffObjects = (objDef, objectA, objectB, ignoreID = false) => {
 	return delta
 }
 
+
+const convertObjectFromDb = (objDef, dbRecord) => {
+	if (objDef === undefined)
+		throw new Error('objDef argument is missing')
+	if (typeof(objDef) != 'object')
+		throw new Error('objDef argument is not an object')
+
+	if (dbRecord === undefined)
+		throw new Error('dbRecord argument is missing')
+	if (typeof(dbRecord) != 'object')
+		throw new Error('dbRecord argument is not an object')
+
+	const object = {}
+	for (const [propName, propDef] of Object.entries(objDef)) {
+		const fieldName = propDef.field ? propDef.field : propName
+		let fieldValue = dbRecord[fieldName]
+		if (fieldValue === undefined)  // should never happen
+			throw new Error(`Property [${propName}] it not defined in DB record`)
+		if (fieldValue !== null) {
+			if (propDef.type === 'boolean') 
+				fieldValue = (fieldValue === 1) ? true : false
+			// FIXME remove this if no error is thrown
+			if (propDef.type === 'date' || propDef.type === 'datetime') {
+				if (typeof(fieldValue) !== 'object')
+					throw new Error(`Property [${propName}] it not an object`)
+				if (fieldValue.constructor.name !== 'date')
+					throw new Error(`Property [${propName}] it not a date`)
+			}
+		}
+		object[propName] = fieldValue
+	}
+	return object
+}
+
+/* FIXME not used
+const convertObjectToDb = (objDef, object) => {
+	if (objDef === undefined)
+		throw new Error('objDef argument is missing')
+	if (typeof(objDef) != 'object')
+		throw new Error('objDef argument is not an object')
+	if (object === undefined)
+		throw new Error('object argument is missing')
+	if (typeof(object) != 'object')
+		throw new Error('object argument is not an object')
+
+	const record = {}
+	for (const [propName, propDef] of Object.entries(objDef)) {
+	}
+
+	throw new Error('not yet implemented')
+	return record
+}
+*/
+
+
 module.exports = {
 	controlObjectProperty,
 	controlObject,
 	diffObjects,
-	createObjectInstance
+	createObjectInstance,
+	convertObjectFromDb,
+	//convertObjectToDb, // FIXME not used 
 }
