@@ -54,9 +54,9 @@ const userObjectDef = {
 	"validationCode" : {
 		"type": "integer",
 		"field": "validation_code",
-		"minimum": "10000",
+		"minimum": "0",
 		"maximum": "99999",
-		"default": "10000",
+		"default": "0",
 		"mandatory": "false",
 	},
 	"phone" : {
