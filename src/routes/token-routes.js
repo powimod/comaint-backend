@@ -15,6 +15,7 @@
  */
 
 
+
 'use script';
 const assert = require('assert');
 const {withAuth} = require('./auth-routes');
@@ -67,7 +68,7 @@ module.exports = (app, TokenModel, View) => {
 			if (token === null)
 				throw new Error(`Token ID <${ tokenId }> not found`);
 			// No root property to control
-			View.sendJsonResult(response, { token: token});
+			View.sendJsonResult(response, { token });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

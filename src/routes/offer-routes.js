@@ -15,6 +15,7 @@
  */
 
 
+
 'use script';
 const assert = require('assert');
 const {withAuth} = require('./auth-routes');
@@ -60,7 +61,7 @@ module.exports = (app, OfferModel, View) => {
 			if (offer === null)
 				throw new Error(`Offer ID <${ offerId }> not found`);
 			// No root property to control
-			View.sendJsonResult(response, { offer: offer});
+			View.sendJsonResult(response, { offer });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -72,7 +73,7 @@ module.exports = (app, OfferModel, View) => {
 		let offerId = request.params.offerId;
 		assert (offerId !== undefined);
 		if (isNaN(offerId)) {
-			View.sendJsonError(response, `Offer ID <${ offerId }> is not a number`);
+			View.sendJsonError(response, `Offer ID <${ offerId}> is not a number`);
 			return;
 		}
 		offerId = parseInt(offerId);
