@@ -107,7 +107,7 @@ async function declareAdminAccount(model) {
 			input = input.trim()
 			if (input === "")
 				return false
-			const error = objectUtils.controlObjectProperty(userObjectDef, 'email', input, i18n_t)
+			const error = objectUtils.controlObjectProperty(userObjectDef, 'email', input, null)
 			if (error) {
 				console.log(`\nInvalid email (${control}) !\n`)
 				continue
@@ -119,7 +119,7 @@ async function declareAdminAccount(model) {
 			let input = await read({ prompt: "Administrator password : ", silent: true, replace: "*" })
 			input = input.trim()
 
-			const error = objectUtils.controlObjectProperty(userObjectDef, 'password', input, i18n_t)
+			const error = objectUtils.controlObjectProperty(userObjectDef, 'password', input, null)
 			if (error) {
 				console.log(`\nInvalid password (${error}) !\n`)
 				continue
@@ -130,7 +130,7 @@ async function declareAdminAccount(model) {
 		while (confirmPassword.length === 0) {
 			let input = await read({ prompt: "Confirm password : ", silent: true, replace: "*" })
 			input = input.trim()
-			const error = objectUtils.controlObjectProperty(userObjectDef, 'password', input, i18n_t)
+			const error = objectUtils.controlObjectProperty(userObjectDef, 'password', input, null)
 			if (error) {
 				console.log(`\nInvalid password (${control}) !\n`)
 				continue
@@ -142,7 +142,6 @@ async function declareAdminAccount(model) {
 			console.log("Passwords do not match !!!")
 			continue
 		}
-
 		try {
 			await authModel.createAdministratorAccount(email, password)
 		}
@@ -173,7 +172,7 @@ async function declareFirstSubscriptionOffer(model)
 			if (input === "")
 				return false
 
-			const error = objectUtils.controlObjectProperty(offerObjectDef, 'title', input, i18n_t)
+			const error = objectUtils.controlObjectProperty(offerObjectDef, 'title', input, null)
 			if (error) {
 				console.log(`\nInvalid title (${error}) !\n`)
 				continue
@@ -186,7 +185,7 @@ async function declareFirstSubscriptionOffer(model)
 			input = input.trim()
 			if (input === "")
 				return false
-			const error = objectUtils.controlObjectProperty(offerObjectDef, 'description', input, i18n_t)
+			const error = objectUtils.controlObjectProperty(offerObjectDef, 'description', input, null)
 			if (error) {
 				console.log(`\nInvalid description (${error}) !\n`)
 				continue
