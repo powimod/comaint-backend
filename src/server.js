@@ -25,6 +25,7 @@ const i18nextMiddleware = require('i18next-http-middleware');
 const Backend = require('i18next-fs-backend');
 
 const { offerObjectDef } = require('./objects/offer-object-def.cjs')
+const { userObjectDef } = require('./objects/user-object-def.cjs')
 const objectUtils = require('./objects/object-util.cjs')
 
 function loadConfig()
@@ -106,8 +107,8 @@ async function declareAdminAccount(model) {
 			input = input.trim()
 			if (input === "")
 				return false
-			let control = controlPropertyEmail(input)
-			if (control) {
+			const error = objectUtils.controlObjectProperty(userObjectDef, 'email', input, i18n_t)
+			if (error) {
 				console.log(`\nInvalid email (${control}) !\n`)
 				continue
 			}
@@ -117,9 +118,10 @@ async function declareAdminAccount(model) {
 		while (password.length === 0) {
 			let input = await read({ prompt: "Administrator password : ", silent: true, replace: "*" })
 			input = input.trim()
-			let control = controlPropertyPassword(input)
-			if (control) {
-				console.log(`\nInvalid password (${control}) !\n`)
+
+			const error = objectUtils.controlObjectProperty(userObjectDef, 'password', input, i18n_t)
+			if (error) {
+				console.log(`\nInvalid password (${error}) !\n`)
 				continue
 			}
 			password = input
@@ -128,8 +130,8 @@ async function declareAdminAccount(model) {
 		while (confirmPassword.length === 0) {
 			let input = await read({ prompt: "Confirm password : ", silent: true, replace: "*" })
 			input = input.trim()
-			let control = controlPropertyPassword(input)
-			if (control) {
+			const error = objectUtils.controlObjectProperty(userObjectDef, 'password', input, i18n_t)
+			if (error) {
 				console.log(`\nInvalid password (${control}) !\n`)
 				continue
 			}
