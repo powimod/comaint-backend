@@ -38,9 +38,10 @@ describe('Test user edition', () => {
 				expect(json.ok).to.be.a('boolean')
 					.and.to.be.equal(true)
 
-				expect(json).to.have.property('user')
-				expect(json.user).to.be.a('object')
-				userToEdit = json.user
+				expect(json).to.have.property('data')
+				expect(json.data).to.have.property('user')
+				expect(json.data.user).to.be.a('object')
+				userToEdit = json.data.user
 			}),
 			it(`Should detect missing user in request body`, async () => {
 				let json = await util.requestJsonPost(ROUTE_EDIT, { })
@@ -60,7 +61,7 @@ describe('Test user edition', () => {
 					.and.to.be.equal(false)
 				expect(json).to.have.property('error')
 				expect(json.error).to.be.a('string')
-					.and.to.be.equal(`Object User is not an object`)
+					.and.to.be.equal(`object argument is not an object`)
 			}),
 			it(`Should accept to change firstname to lower case`, async () => {
 				userToEdit.firstname = userToEdit.firstname.toLowerCase()
@@ -70,10 +71,11 @@ describe('Test user edition', () => {
 				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(true)
 
-				expect(json).to.have.property('user')
-				expect(json.user).to.be.a('object')
+				expect(json).to.have.property('data')
+				expect(json.data).to.have.property('user')
+				expect(json.data.user).to.be.a('object')
 
-				const editedUser = json.user
+				const editedUser = json.data.user
 				expect(editedUser).to.have.property('id')
 					.and.to.be.equal(userToEdit.id)
 
@@ -88,9 +90,10 @@ describe('Test user edition', () => {
 				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(true)
 
-				expect(json).to.have.property('user')
-				expect(json.user).to.be.a('object')
-				const editedUser = json.user
+				expect(json).to.have.property('data')
+				expect(json.data).to.have.property('user')
+				expect(json.data.user).to.be.a('object')
+				const editedUser = json.data.user
 
 				expect(editedUser).to.have.property('firstname')
 					.and.to.be.equal(userToEdit.firstname)

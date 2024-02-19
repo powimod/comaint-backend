@@ -47,7 +47,7 @@ describe('Test user edition', () => {
 					.and.to.be.equal(false)
 				expect(json).to.have.property('error')
 				expect(json.error).to.be.a('string')
-					.and.to.be.equal('Object User is not an object')
+					.and.to.be.equal('object argument is not an object')
 			}),
 			it(`Should accept valid user in request body`, async () => {
 				let json = await util.requestJsonPost(ROUTE_CREATE, {
@@ -57,8 +57,9 @@ describe('Test user edition', () => {
 				expect(json.ok).to.be.a('boolean')
 					.and.to.be.equal(true)
 
-				expect(json).to.have.property('user')
-				const foundUser = json.user
+				expect(json).to.have.property('data')
+				expect(json.data).to.have.property('user')
+				const foundUser = json.data.user
 				expect(foundUser).to.be.a('object')
 
 				expect(foundUser).to.have.property('id')
