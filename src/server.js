@@ -24,7 +24,8 @@ const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const Backend = require('i18next-fs-backend');
 
-const {controlPropertyTitle, controlPropertyDescription} = require('./objects/offer-object-helper.cjs')
+const { offerObjectDef } = require('./objects/offer-object-def.cjs')
+const objectUtils = require('./objects/object-util.cjs')
 
 function loadConfig()
 {
@@ -158,7 +159,7 @@ async function declareFirstSubscriptionOffer(model)
 	let offer = {} 
 	while (true) {
 
-		const offerCount = await offerModel.getCount()
+		const offerCount = await offerModel.findOfferCount()
 		if (offerCount > 0)
 			break
 
@@ -170,9 +171,9 @@ async function declareFirstSubscriptionOffer(model)
 			if (input === "")
 				return false
 
-			let control = controlPropertyTitle(input)
-			if (control) {
-				console.log(`\nInvalid title (${control}) !\n`)
+			const error = objectUtils.controlObjectProperty(offerObjectDef, 'title', input, i18n_t)
+			if (error) {
+				console.log(`\nInvalid title (${error}) !\n`)
 				continue
 			}
 			offer.title = input 
@@ -183,14 +184,13 @@ async function declareFirstSubscriptionOffer(model)
 			input = input.trim()
 			if (input === "")
 				return false
-			let control = controlPropertyDescription(input)
-			if (control) {
-				console.log(`\nInvalid description  (${control}) !\n`)
+			const error = objectUtils.controlObjectProperty(offerObjectDef, 'description', input, i18n_t)
+			if (error) {
+				console.log(`\nInvalid description (${error}) !\n`)
 				continue
 			}
 			offer.description = input 
 		}
-
 
 		offer.active = true
 
