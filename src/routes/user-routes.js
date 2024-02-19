@@ -107,9 +107,16 @@ module.exports = (app, UserModel, View) => {
 
 	app.post('/api/v1/user/create', withAuth, async (request, response) => {
 		try {
+			const companyId = request.companyId
+			assert(companyId !== undefined)
+			assert(companyId !== null)
+
 			const user = request.body.user;
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`);
+
+			user.companyId = companyId
+
 			let newUser = await UserModel.createUser(user, request.t);
 			if (newUser.id === undefined)
 				throw new Error(`Can't find ID of newly created User`);
