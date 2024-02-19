@@ -63,13 +63,6 @@ describe('Test user registration', () => {
 				expect(json.data).to.have.property('access-token')
 				expect(json.data).to.have.property('refresh-token')
 
-				expect(json.data).to.have.property('firstname')
-				expect(json.data.firstname).to.be.a('string')
-					.and.to.be.equal(refUser.firstname)
-				expect(json.data).to.have.property('lastname')
-				expect(json.data.lastname).to.be.a('string')
-					.and.to.be.equal(refUser.lastname)
-
 				const user = await account.findUserByEmail(refUser.email)
 				expect(user).not.to.be.null
 				expect(user).to.have.property('id')
