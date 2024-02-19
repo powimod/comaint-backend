@@ -79,50 +79,26 @@ exports.initialize = (app, authModel, View, config) => {
 			if (lastname.length === 0)
 				throw new Error(request.t('error.empty_data', {'object': 'lastname'}));
 			
-			const administrator = request.body.administrator
-			if (administrator === undefined)
-				throw new Error('administrator not found in request body'); 
-			if (administrator.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'administrator'}));
-			
-			const parkRole = request.body.parkRole
-			if (parkRole === undefined)
-				throw new Error('parkRole not found in request body'); 
-			if (parkRole.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'parkRole'}));
-			
-			const stockRole = request.body.stockRole
-			if (stockRole === undefined)
-				throw new Error('stockRole not found in request body'); 
-			if (stockRole.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'stockRole'}));
-			
-			const active = request.body.active
-			if (active === undefined)
-				throw new Error('active not found in request body'); 
-			if (active.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'active'}));
-			
-			const accountLocked = request.body.accountLocked
-			if (accountLocked === undefined)
-				throw new Error('accountLocked not found in request body'); 
-			if (accountLocked.length === 0)
-				throw new Error(request.t('error.empty_data', {'object': 'accountLocked'}));
-			
-
+		
 			// make a random validation code which will be sent by email to unlock account
 			const validationCode = _authModel.generateValidationCode();
 			console.log(`Validation code is ${ validationCode }`); // TODO remove this
 
-			const result = await _authModel.register(email,password,firstname,lastname,administrator,parkRole,stockRole,active,accountLocked,validationCode, request.t);
+			const result = await _authModel.register(email, password, firstname, lastname, validationCode, request.t);
 
 			const userId = result.userId; 
 			if (userId === undefined)
 				throw new Error('userId not found'); 
 
-			const companyId = null;
 
-			await _authModel.sendValidationCode(validationCode, email, request.t);
+			const companyId = result.companyId
+			if (companyId === undefined)
+				throw new Error('companyId not found')
+			if (companyId === null)
+				throw new Error('companyId is null')
+
+
+			await _authModel.sendRegisterValidationCode(validationCode, email, request.t);
 
 			// generate access and refresh tokens
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
@@ -131,6 +107,7 @@ exports.initialize = (app, authModel, View, config) => {
 			View.sendJsonResult(response, {
 				userId: userId,
 				companyId: companyId,
+				/*
 				firstname : firstname,
 				lastname : lastname,
 				administrator : administrator,
@@ -139,6 +116,7 @@ exports.initialize = (app, authModel, View, config) => {
 				active : active,
 				accountLocked : accountLocked,
 				email: email,
+				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
@@ -181,6 +159,7 @@ exports.initialize = (app, authModel, View, config) => {
 				throw new Error(`Can't find <password> in request body`);
 
 			const result = await _authModel.login(email, password, request.t);
+			console.log(result)
 
 			const userId = result.userId; 
 			if (userId === undefined)
