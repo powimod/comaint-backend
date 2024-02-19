@@ -45,8 +45,8 @@ module.exports = (app, UnitModel, View) => {
 				resultsPerPage : resultsPerPage,
 				offset : offset
 			};
-			const list = await UnitModel.getList(filters, params);
-			View.sendJsonResult(response, { unitList: list } );
+			const unitList = await UnitModel.findUnitList(filters, params);
+			View.sendJsonResult(response, { unitList });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -69,26 +69,47 @@ module.exports = (app, UnitModel, View) => {
 			// control root property 
 			if (request.companyId !== unit.companyId)
 				throw new Error('Unauthorized access');
-			View.sendJsonResult(response, { unit: unit} );
+			View.sendJsonResult(response, { unit: unit});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
 		}
 	});
 
+
+	app.get('/api/v1/unit/:unitId/children-count', withAuth, async (request, response) => {
+		let unitId = request.params.unitId;
+		assert (unitId !== undefined);
+		if (isNaN(unitId)) {
+			View.sendJsonError(response, `Offer ID <${ unitId}> is not a number`);
+			return;
+		}
+		unitId = parseInt(unitId);
+		try {
+			const childrenCountList = await OfferModel.getChildrenCountList(unitId);
+			if (childrenCountList === null)
+				throw new Error(`Offer ID <${ unitId }> not found`);
+			View.sendJsonResult(response, { childrenCountList } );
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+
 	app.post('/api/v1/unit/create', withAuth, async (request, response) => {
 		try {
 			const unit = request.body.unit;
 			if (unit === undefined)
 				throw new Error(`Can't find <unit> object in request body`);
-			let newUnit = await UnitModel.createUnit(unit);
+			let newUnit = await UnitModel.createUnit(unit, request.t);
 			if (newUnit.id === undefined)
 				throw new Error(`Can't find ID of newly created Unit`);
-			response.json({ ok: true, unit : newUnit });
+			View.sendJsonResult(response, { unit : newUnit });
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error;
-			response.json({ ok : false, error: errorMessage  });
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -97,14 +118,13 @@ module.exports = (app, UnitModel, View) => {
 			const unit = request.body.unit
 			if (unit === undefined)
 				throw new Error(`Can't find <unit> object in request body`)
-			let editedUnit = await UnitModel.editUnit(unit)
+			let editedUnit = await UnitModel.editUnit(unit, request.t)
 			if (editedUnit.id !== unit.id)
 				throw new Error(`Edited Unit ID does not match`)
-			response.json({ ok: true, unit : editedUnit })
+			View.sendJsonResult(response, { unit : editedUnit })
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error
-			response.json({ ok : false, error: errorMessage  })
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -132,7 +152,7 @@ module.exports = (app, UnitModel, View) => {
 			if (request.companyId !== unit.companyId)
 				throw new Error('Unauthorized access');
 			const success = await UnitModel.deleteById(unitId, recursive);
-			View.sendJsonResult(response, {success} );
+			View.sendJsonResult(response, {success});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

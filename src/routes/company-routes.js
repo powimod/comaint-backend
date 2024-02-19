@@ -45,8 +45,8 @@ module.exports = (app, CompanyModel, View) => {
 				resultsPerPage : resultsPerPage,
 				offset : offset
 			};
-			const list = await CompanyModel.getList(filters, params);
-			View.sendJsonResult(response, { companyList: list } );
+			const companyList = await CompanyModel.findCompanyList(filters, params);
+			View.sendJsonResult(response, { companyList });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -69,26 +69,47 @@ module.exports = (app, CompanyModel, View) => {
 			// control root property 
 			if (request.companyId !== company.id)
 				throw new Error('Unauthorized access');
-			View.sendJsonResult(response, { company: company} );
+			View.sendJsonResult(response, { company: company});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
 		}
 	});
 
+
+	app.get('/api/v1/company/:companyId/children-count', withAuth, async (request, response) => {
+		let companyId = request.params.companyId;
+		assert (companyId !== undefined);
+		if (isNaN(companyId)) {
+			View.sendJsonError(response, `Offer ID <${ companyId}> is not a number`);
+			return;
+		}
+		companyId = parseInt(companyId);
+		try {
+			const childrenCountList = await OfferModel.getChildrenCountList(companyId);
+			if (childrenCountList === null)
+				throw new Error(`Offer ID <${ companyId }> not found`);
+			View.sendJsonResult(response, { childrenCountList } );
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+
 	app.post('/api/v1/company/create', withAuth, async (request, response) => {
 		try {
 			const company = request.body.company;
 			if (company === undefined)
 				throw new Error(`Can't find <company> object in request body`);
-			let newCompany = await CompanyModel.createCompany(company);
+			let newCompany = await CompanyModel.createCompany(company, request.t);
 			if (newCompany.id === undefined)
 				throw new Error(`Can't find ID of newly created Company`);
-			response.json({ ok: true, company : newCompany });
+			View.sendJsonResult(response, { company : newCompany });
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error;
-			response.json({ ok : false, error: errorMessage  });
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -97,14 +118,13 @@ module.exports = (app, CompanyModel, View) => {
 			const company = request.body.company
 			if (company === undefined)
 				throw new Error(`Can't find <company> object in request body`)
-			let editedCompany = await CompanyModel.editCompany(company)
+			let editedCompany = await CompanyModel.editCompany(company, request.t)
 			if (editedCompany.id !== company.id)
 				throw new Error(`Edited Company ID does not match`)
-			response.json({ ok: true, company : editedCompany })
+			View.sendJsonResult(response, { company : editedCompany })
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error
-			response.json({ ok : false, error: errorMessage  })
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -132,7 +152,7 @@ module.exports = (app, CompanyModel, View) => {
 			if (request.companyId !== company.id)
 				throw new Error('Unauthorized access');
 			const success = await CompanyModel.deleteById(companyId, recursive);
-			View.sendJsonResult(response, {success} );
+			View.sendJsonResult(response, {success});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

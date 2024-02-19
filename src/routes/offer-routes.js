@@ -38,8 +38,8 @@ module.exports = (app, OfferModel, View) => {
 				resultsPerPage : resultsPerPage,
 				offset : offset
 			};
-			const list = await OfferModel.getList(filters, params);
-			View.sendJsonResult(response, { offerList: list } );
+			const offerList = await OfferModel.findOfferList(filters, params);
+			View.sendJsonResult(response, { offerList });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -60,7 +60,7 @@ module.exports = (app, OfferModel, View) => {
 			if (offer === null)
 				throw new Error(`Offer ID <${ offerId }> not found`);
 			// No root property to control
-			View.sendJsonResult(response, { offer: offer} );
+			View.sendJsonResult(response, { offer: offer});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -72,7 +72,7 @@ module.exports = (app, OfferModel, View) => {
 		let offerId = request.params.offerId;
 		assert (offerId !== undefined);
 		if (isNaN(offerId)) {
-			View.sendJsonError(response, `Offer ID <${ offerId}> is not a number`);
+			View.sendJsonError(response, `Offer ID <${ offerId }> is not a number`);
 			return;
 		}
 		offerId = parseInt(offerId);
@@ -88,15 +88,16 @@ module.exports = (app, OfferModel, View) => {
 	})
 
 
+
 	app.post('/api/v1/offer/create', withAuth, async (request, response) => {
 		try {
 			const offer = request.body.offer;
 			if (offer === undefined)
 				throw new Error(`Can't find <offer> object in request body`);
-			let newOffer = await OfferModel.createOffer(offer);
+			let newOffer = await OfferModel.createOffer(offer, request.t);
 			if (newOffer.id === undefined)
 				throw new Error(`Can't find ID of newly created Offer`);
-			View.sendJsonResult(response, { offer : newOffer } );
+			View.sendJsonResult(response, { offer : newOffer });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -108,10 +109,10 @@ module.exports = (app, OfferModel, View) => {
 			const offer = request.body.offer
 			if (offer === undefined)
 				throw new Error(`Can't find <offer> object in request body`)
-			let editedOffer = await OfferModel.editOffer(offer)
+			let editedOffer = await OfferModel.editOffer(offer, request.t)
 			if (editedOffer.id !== offer.id)
 				throw new Error(`Edited Offer ID does not match`)
-			View.sendJsonResult(response, { offer : editedOffer } );
+			View.sendJsonResult(response, { offer : editedOffer })
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -140,12 +141,13 @@ module.exports = (app, OfferModel, View) => {
 				throw new Error(`Offer ID <${ offerId }> not found`);
 			// No root property to control
 			const success = await OfferModel.deleteById(offerId, recursive);
-			View.sendJsonResult(response, {success} );
+			View.sendJsonResult(response, {success});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
 		}
 	});
+
 
 }
 

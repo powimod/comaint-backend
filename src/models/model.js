@@ -107,13 +107,14 @@ class Model {
 			}
 		}, pingInterval);
 
-		this.#AuthModel         = require('./auth-model.js')(this.#config)
-		this.#UserModel         = require('./user-model.js')(this.#config)
-		this.#OfferModel        = require('./offer-model.js')()
-		this.#SubscriptionModel = require('./subscription-model.js')()
-		this.#CompanyModel      = require('./company-model.js')()
-		this.#TokenModel        = require('./token-model.js')()
-		this.#UnitModel         = require('./unit-model.js')()
+		this.#AuthModel = require('./auth-model.js')(this.#config);
+		this.#OfferModel = require('./offer-model.js')(this.#config);
+		this.#SubscriptionModel = require('./subscription-model.js')(this.#config);
+		this.#CompanyModel = require('./company-model.js')(this.#config);
+		this.#UserModel = require('./user-model.js')(this.#config);
+		this.#TokenModel = require('./token-model.js')(this.#config);
+		this.#UnitModel = require('./unit-model.js')(this.#config);
+		
 	}
 
 	getAuthModel() {

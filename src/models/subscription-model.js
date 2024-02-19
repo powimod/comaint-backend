@@ -14,41 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 'use strict'
 const assert = require('assert');
 
-const subscriptionObjectHelper = require('../objects/subscription-object-helper.cjs')
+const { subscriptionObjectDef } = require('../objects/subscription-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class SubscriptionModel {
-
 	static #model = null;
 
 	static initialize = () => {
 		assert(this.#model === null);
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
 	}
 
-	static async getIdList(filters) {
+	static async getSubscriptionIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.offerId !== undefined) {
-			sqlFilters.push('id_offer = ?')
-			sqlValues.push(filters.offerId)
-		}
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId)
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
-
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(subscriptionObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+ 
 		let sql = `SELECT id FROM subscriptions ${whereClause}`
-		const result = await db.query(sql, sqlValues)
+		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
 		const idList = []
@@ -57,24 +49,32 @@ class SubscriptionModel {
 		return idList;
 	}
 
+	static async findSubscriptionCount(filters = []) {
+		assert(filters !== undefined);
+		assert(this.#model !== null);
+		const db = this.#model.db;
 
-	static async getList(filters, params) {
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(subscriptionObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+
+		let sql = `SELECT COUNT(id) as counter FROM subscriptions ${whereClause}`
+		const result = await db.query(sql, fieldValues)
+		if (result.code)
+			throw new Error(result.code)
+		return result[0].counter;
+	}
+
+
+	static async findSubscriptionList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.offerId !== undefined) {
-			sqlFilters.push('id_offer = ?')
-			sqlValues.push(filters.offerId);
-		}
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId);
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ');
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(subscriptionObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let resultsPerPage = params.resultsPerPage; 
 		if (resultsPerPage === undefined || isNaN(resultsPerPage)) 
@@ -82,7 +82,7 @@ class SubscriptionModel {
 		else
 			resultsPerPage = parseInt(resultsPerPage);
 		if (resultsPerPage < 1) resultsPerPage = 1;
-		sqlValues.push(resultsPerPage);
+		fieldValues.push(resultsPerPage);
 
 		let offset = params.offset; 
 		if (offset=== undefined || isNaN(resultsPerPage)) 
@@ -90,48 +90,64 @@ class SubscriptionModel {
 		else
 			offset = parseInt(offset);
 		if (offset < 0) offset = 0;
-		sqlValues.push(offset);
+		fieldValues.push(offset);
 
 		let sql = `SELECT * FROM subscriptions ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
-		// TODO order by
-		// TODO field selection 
 
-		const result = await db.query(sql, sqlValues);
+		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
 		const subscriptionList = [];
 		for (let subscriptionRecord of result) 
-			subscriptionList.push( subscriptionObjectHelper.convertSubscriptionFromDb(subscriptionRecord) );
+			subscriptionList.push( objectUtils.convertObjectFromDb(subscriptionObjectDef, subscriptionRecord, /*filter=*/true) )
 		return subscriptionList;
 	}
 
-	static async getSubscriptionById(idSubscription) {
+	static async getSubscriptionById(subscriptionId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (idSubscription === undefined)
-			throw new Error('Argument <idSubscription> required');
-		if (isNaN(idSubscription) === undefined)
-			throw new Error('Argument <idSubscription> is not a number');
+		if (subscriptionId === undefined)
+			throw new Error('Argument <subscriptionId> required');
+		if (isNaN(subscriptionId) === undefined)
+			throw new Error('Argument <subscriptionId> is not a number');
 		let sql = `SELECT * FROM subscriptions WHERE id = ?`;
-		const result = await db.query(sql, [idSubscription]);
+		const result = await db.query(sql, [subscriptionId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const subscription = subscriptionObjectHelper.convertSubscriptionFromDb(result[0]);
+		const subscription = objectUtils.convertObjectFromDb(subscriptionObjectDef, result[0], /*filter=*/false)
 		return subscription;
 	}
+	
 
-	static async createSubscription(subscription) {
+
+	static async getChildrenCountList(subscriptionId) {
+		if (subscriptionId === undefined)
+			throw new Error('Argument <subscriptionId> required');
+		if (isNaN(subscriptionId) === undefined)
+			throw new Error('Argument <subscriptionId> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql, result;
+		const childrenCounterList = {}
+
+		
+
+		return childrenCounterList;
+	}
+
+
+	static async createSubscription(subscription, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = subscriptionObjectHelper.controlObjectSubscription(subscription, /*fullCheck=*/true, /*checkId=*/false)
+		const error = objectUtils.controlObject(subscriptionObjectDef, subscription, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const subscriptionDb = subscriptionObjectHelper.convertSubscriptionToDb(subscription)
+		const subscriptionDb = objectUtils.convertObjectToDb(subscriptionObjectDef, subscription)
 
 		const fieldNames = []
 		const markArray = []
@@ -148,8 +164,6 @@ class SubscriptionModel {
 			INSERT INTO subscriptions(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
@@ -159,18 +173,18 @@ class SubscriptionModel {
 		return subscription;
 	}
 
-	static async editSubscription(subscription) {
+	static async editSubscription(subscription, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = subscriptionObjectHelper.controlObjectSubscription(subscription, /*fullCheck=*/false, /*checkId=*/true)
+		const error = objectUtils.controlObject(subscriptionObjectDef, subscription, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const subscriptionDb = subscriptionObjectHelper.convertSubscriptionToDb(subscription)
+		const subscriptionDb = objectUtils.convertObjectToDb(subscriptionObjectDef, subscription)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(userDb)) {
+		for (let [propName, propValue] of Object.entries(subscriptionDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)
@@ -184,9 +198,6 @@ class SubscriptionModel {
 		`
 		sqlParams.push(subscription.id) // WHERE clause
 
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
-
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
@@ -195,6 +206,7 @@ class SubscriptionModel {
 		return subscription;
 	}
 
+	
 	static async deleteById(subscriptionId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -215,10 +227,11 @@ class SubscriptionModel {
 		return (result.affectedRows !== 0) 
 	}
 
+	
+
 	static async hasChildren(subscriptionId) {
 		return false
 	}
-
 }
 
 module.exports = () => {

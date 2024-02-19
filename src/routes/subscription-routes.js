@@ -52,8 +52,8 @@ module.exports = (app, SubscriptionModel, View) => {
 				resultsPerPage : resultsPerPage,
 				offset : offset
 			};
-			const list = await SubscriptionModel.getList(filters, params);
-			View.sendJsonResult(response, { subscriptionList: list } );
+			const subscriptionList = await SubscriptionModel.findSubscriptionList(filters, params);
+			View.sendJsonResult(response, { subscriptionList });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -76,26 +76,47 @@ module.exports = (app, SubscriptionModel, View) => {
 			// control root property 
 			if (request.companyId !== subscription.companyId)
 				throw new Error('Unauthorized access');
-			View.sendJsonResult(response, { subscription: subscription} );
+			View.sendJsonResult(response, { subscription: subscription});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
 		}
 	});
 
+
+	app.get('/api/v1/subscription/:subscriptionId/children-count', withAuth, async (request, response) => {
+		let subscriptionId = request.params.subscriptionId;
+		assert (subscriptionId !== undefined);
+		if (isNaN(subscriptionId)) {
+			View.sendJsonError(response, `Offer ID <${ subscriptionId}> is not a number`);
+			return;
+		}
+		subscriptionId = parseInt(subscriptionId);
+		try {
+			const childrenCountList = await OfferModel.getChildrenCountList(subscriptionId);
+			if (childrenCountList === null)
+				throw new Error(`Offer ID <${ subscriptionId }> not found`);
+			View.sendJsonResult(response, { childrenCountList } );
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+
 	app.post('/api/v1/subscription/create', withAuth, async (request, response) => {
 		try {
 			const subscription = request.body.subscription;
 			if (subscription === undefined)
 				throw new Error(`Can't find <subscription> object in request body`);
-			let newSubscription = await SubscriptionModel.createSubscription(subscription);
+			let newSubscription = await SubscriptionModel.createSubscription(subscription, request.t);
 			if (newSubscription.id === undefined)
 				throw new Error(`Can't find ID of newly created Subscription`);
-			response.json({ ok: true, subscription : newSubscription });
+			View.sendJsonResult(response, { subscription : newSubscription });
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error;
-			response.json({ ok : false, error: errorMessage  });
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -104,14 +125,13 @@ module.exports = (app, SubscriptionModel, View) => {
 			const subscription = request.body.subscription
 			if (subscription === undefined)
 				throw new Error(`Can't find <subscription> object in request body`)
-			let editedSubscription = await SubscriptionModel.editSubscription(subscription)
+			let editedSubscription = await SubscriptionModel.editSubscription(subscription, request.t)
 			if (editedSubscription.id !== subscription.id)
 				throw new Error(`Edited Subscription ID does not match`)
-			response.json({ ok: true, subscription : editedSubscription })
+			View.sendJsonResult(response, { subscription : editedSubscription })
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error
-			response.json({ ok : false, error: errorMessage  })
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -139,7 +159,7 @@ module.exports = (app, SubscriptionModel, View) => {
 			if (request.companyId !== subscription.companyId)
 				throw new Error('Unauthorized access');
 			const success = await SubscriptionModel.deleteById(subscriptionId, recursive);
-			View.sendJsonResult(response, {success} );
+			View.sendJsonResult(response, {success});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
