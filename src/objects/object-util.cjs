@@ -98,6 +98,11 @@ const controlObjectProperty = (objDef, propName, propValue, i18n_t = null) => {
 	switch (propDef.type) {
 
 		case 'id':
+		case 'link':
+			if (typeof(propValue) !== 'number' )
+				return i18n_t('error.prop.is_not_an_integer', {property: propName})
+			return false // no error
+
 		case 'integer':
 			if (typeof(propValue) !== 'number' )
 				return i18n_t('error.prop.is_not_an_integer', {property: propName})
@@ -121,6 +126,7 @@ const controlObjectProperty = (objDef, propName, propValue, i18n_t = null) => {
 
 		case 'string':
 		case 'text':
+		case 'image':
 			if (typeof(propValue) !== 'string' )
 				return i18n_t('error.prop.is_not_a_string', {property: propName})
 			if (propDef.minimum && propValue.length < propDef.minimum )
@@ -138,7 +144,7 @@ const controlObjectProperty = (objDef, propName, propValue, i18n_t = null) => {
 				return i18n_t('error.prop.is_too_short', {property: propName, size: propDef.minimum})
 			if (propDef.maximum && propValue.length > propDef.maximum )
 				return i18n_t('error.prop.is_too_long',  {property: propName, size: propDef.maximum})
-			if (value.match(/\S+@\S+\.\S+/) === null)
+			if (propValue.match(/\S+@\S+\.\S+/) === null)
 				return i18n_t('error.prop.is_malformed_email', {property: 'email'})
 			return false // no error
 
@@ -210,10 +216,16 @@ const controlObject = (objDef, object, fullCheck = false, controlId = true, i18n
 	for (const [propName, propDef] of Object.entries(objDef)) {
 		if (propDef.type === 'id' && controlId === false)
 			continue
-		if (fullCheck || object[propName] !== undefined) {
+		const propValue = object[propName]
+		if (propValue === undefined || propValue === null) {
+			if (fullCheck && objDef.mandatory) 
+				return `Property ${propName} is not defined`
+		}
+		else {
 			const error = controlObjectProperty (objDef, propName, object[propName], i18n_t)
 			if (error)
 				return error
+
 		}
 	}
 	return false // no error
@@ -250,6 +262,7 @@ const createObjectInstance = (objDef) => {
 			case 'string':
 			case 'text':
 			case 'email':
+			case 'image':
 				if (object.defaultValue)
 					object[propName] = object.defaultValue
 				else if (propDef.mandatory)
