@@ -15,6 +15,7 @@
  */
 
 
+
 'use script';
 const assert = require('assert');
 const {withAuth} = require('./auth-routes');
@@ -69,7 +70,7 @@ module.exports = (app, CompanyModel, View) => {
 			// control root property 
 			if (request.companyId !== company.id)
 				throw new Error('Unauthorized access');
-			View.sendJsonResult(response, { company: company});
+			View.sendJsonResult(response, { company });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

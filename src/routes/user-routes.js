@@ -15,6 +15,7 @@
  */
 
 
+
 'use script';
 const assert = require('assert');
 const {withAuth} = require('./auth-routes');
@@ -46,6 +47,10 @@ module.exports = (app, UserModel, View) => {
 				offset : offset
 			};
 			const userList = await UserModel.findUserList(filters, params);
+			for (const user of userList) {
+				// remove secret property [password]
+				delete user['password']
+			}
 			View.sendJsonResult(response, { userList });
 		}
 		catch (error) {
@@ -69,7 +74,9 @@ module.exports = (app, UserModel, View) => {
 			// control root property 
 			if (request.companyId !== user.companyId)
 				throw new Error('Unauthorized access');
-			View.sendJsonResult(response, { user: user});
+			// remove secret property [password]
+			delete user['password']
+			View.sendJsonResult(response, { user });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -106,6 +113,8 @@ module.exports = (app, UserModel, View) => {
 			let newUser = await UserModel.createUser(user, request.t);
 			if (newUser.id === undefined)
 				throw new Error(`Can't find ID of newly created User`);
+			// remove secret property [password]
+			delete newUser['password']
 			View.sendJsonResult(response, { user : newUser });
 		}
 		catch (error) {
@@ -121,6 +130,8 @@ module.exports = (app, UserModel, View) => {
 			let editedUser = await UserModel.editUser(user, request.t)
 			if (editedUser.id !== user.id)
 				throw new Error(`Edited User ID does not match`)
+			// remove secret property [password]
+			delete editedUser['password']
 			View.sendJsonResult(response, { user : editedUser })
 		}
 		catch (error) {
