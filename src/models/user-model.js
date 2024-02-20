@@ -233,9 +233,6 @@ class UserModel {
 		`
 		sqlParams.push(user.id) // WHERE clause
 
-		console.log("dOm sql:", sqlRequest)
-		console.log("dOm params:", sqlParams)
-
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
