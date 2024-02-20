@@ -14,37 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 'use strict'
 const assert = require('assert');
 
-const tokenObjectHelper = require('../objects/token-object-helper.cjs')
+const { tokenObjectDef } = require('../objects/token-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class TokenModel {
-
 	static #model = null;
 
 	static initialize = () => {
 		assert(this.#model === null);
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
 	}
 
-	static async getIdList(filters) {
+	static async getTokenIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.userId !== undefined) {
-			sqlFilters.push('id_user = ?')
-			sqlValues.push(filters.userId)
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
-
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(tokenObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+ 
 		let sql = `SELECT id FROM tokens ${whereClause}`
-		const result = await db.query(sql, sqlValues)
+		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
 		const idList = []
@@ -53,20 +49,32 @@ class TokenModel {
 		return idList;
 	}
 
+	static async findTokenCount(filters = []) {
+		assert(filters !== undefined);
+		assert(this.#model !== null);
+		const db = this.#model.db;
 
-	static async getList(filters, params) {
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(tokenObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+
+		let sql = `SELECT COUNT(id) as counter FROM tokens ${whereClause}`
+		const result = await db.query(sql, fieldValues)
+		if (result.code)
+			throw new Error(result.code)
+		return result[0].counter;
+	}
+
+
+	static async findTokenList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.userId !== undefined) {
-			sqlFilters.push('id_user = ?')
-			sqlValues.push(filters.userId);
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ');
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(tokenObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let resultsPerPage = params.resultsPerPage; 
 		if (resultsPerPage === undefined || isNaN(resultsPerPage)) 
@@ -74,7 +82,7 @@ class TokenModel {
 		else
 			resultsPerPage = parseInt(resultsPerPage);
 		if (resultsPerPage < 1) resultsPerPage = 1;
-		sqlValues.push(resultsPerPage);
+		fieldValues.push(resultsPerPage);
 
 		let offset = params.offset; 
 		if (offset=== undefined || isNaN(resultsPerPage)) 
@@ -82,48 +90,64 @@ class TokenModel {
 		else
 			offset = parseInt(offset);
 		if (offset < 0) offset = 0;
-		sqlValues.push(offset);
+		fieldValues.push(offset);
 
 		let sql = `SELECT * FROM tokens ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
-		// TODO order by
-		// TODO field selection 
 
-		const result = await db.query(sql, sqlValues);
+		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
 		const tokenList = [];
 		for (let tokenRecord of result) 
-			tokenList.push( tokenObjectHelper.convertTokenFromDb(tokenRecord) );
+			tokenList.push( objectUtils.convertObjectFromDb(tokenObjectDef, tokenRecord, /*filter=*/true) )
 		return tokenList;
 	}
 
-	static async getTokenById(idToken) {
+	static async getTokenById(tokenId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (idToken === undefined)
-			throw new Error('Argument <idToken> required');
-		if (isNaN(idToken) === undefined)
-			throw new Error('Argument <idToken> is not a number');
+		if (tokenId === undefined)
+			throw new Error('Argument <tokenId> required');
+		if (isNaN(tokenId) === undefined)
+			throw new Error('Argument <tokenId> is not a number');
 		let sql = `SELECT * FROM tokens WHERE id = ?`;
-		const result = await db.query(sql, [idToken]);
+		const result = await db.query(sql, [tokenId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const token = tokenObjectHelper.convertTokenFromDb(result[0]);
+		const token = objectUtils.convertObjectFromDb(tokenObjectDef, result[0], /*filter=*/false)
 		return token;
 	}
+	
 
-	static async createToken(token) {
+
+	static async getChildrenCountList(tokenId) {
+		if (tokenId === undefined)
+			throw new Error('Argument <tokenId> required');
+		if (isNaN(tokenId) === undefined)
+			throw new Error('Argument <tokenId> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql, result;
+		const childrenCounterList = {}
+
+		
+
+		return childrenCounterList;
+	}
+
+
+	static async createToken(token, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = tokenObjectHelper.controlObjectToken(token, /*fullCheck=*/true, /*checkId=*/false)
+		const error = objectUtils.controlObject(tokenObjectDef, token, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const tokenDb = tokenObjectHelper.convertTokenToDb(token)
+		const tokenDb = objectUtils.convertObjectToDb(tokenObjectDef, token)
 
 		const fieldNames = []
 		const markArray = []
@@ -140,8 +164,6 @@ class TokenModel {
 			INSERT INTO tokens(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
@@ -151,18 +173,18 @@ class TokenModel {
 		return token;
 	}
 
-	static async editToken(token) {
+	static async editToken(token, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = tokenObjectHelper.controlObjectToken(token, /*fullCheck=*/false, /*checkId=*/true)
+		const error = objectUtils.controlObject(tokenObjectDef, token, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const tokenDb = tokenObjectHelper.convertTokenToDb(token)
+		const tokenDb = objectUtils.convertObjectToDb(tokenObjectDef, token)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(userDb)) {
+		for (let [propName, propValue] of Object.entries(tokenDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)
@@ -176,9 +198,6 @@ class TokenModel {
 		`
 		sqlParams.push(token.id) // WHERE clause
 
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
-
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
@@ -187,6 +206,7 @@ class TokenModel {
 		return token;
 	}
 
+	
 	static async deleteById(tokenId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -207,10 +227,11 @@ class TokenModel {
 		return (result.affectedRows !== 0) 
 	}
 
+	
+
 	static async hasChildren(tokenId) {
 		return false
 	}
-
 }
 
 module.exports = () => {

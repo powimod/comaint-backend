@@ -15,6 +15,7 @@
  */
 
 
+
 'use script';
 const assert = require('assert');
 const {withAuth} = require('./auth-routes');
@@ -45,8 +46,8 @@ module.exports = (app, TokenModel, View) => {
 				resultsPerPage : resultsPerPage,
 				offset : offset
 			};
-			const list = await TokenModel.getList(filters, params);
-			View.sendJsonResult(response, { tokenList: list } );
+			const tokenList = await TokenModel.findTokenList(filters, params);
+			View.sendJsonResult(response, { tokenList });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -67,26 +68,47 @@ module.exports = (app, TokenModel, View) => {
 			if (token === null)
 				throw new Error(`Token ID <${ tokenId }> not found`);
 			// No root property to control
-			View.sendJsonResult(response, { token: token} );
+			View.sendJsonResult(response, { token });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
 		}
 	});
 
+
+	app.get('/api/v1/token/:tokenId/children-count', withAuth, async (request, response) => {
+		let tokenId = request.params.tokenId;
+		assert (tokenId !== undefined);
+		if (isNaN(tokenId)) {
+			View.sendJsonError(response, `Offer ID <${ tokenId}> is not a number`);
+			return;
+		}
+		tokenId = parseInt(tokenId);
+		try {
+			const childrenCountList = await OfferModel.getChildrenCountList(tokenId);
+			if (childrenCountList === null)
+				throw new Error(`Offer ID <${ tokenId }> not found`);
+			View.sendJsonResult(response, { childrenCountList } );
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+
 	app.post('/api/v1/token/create', withAuth, async (request, response) => {
 		try {
 			const token = request.body.token;
 			if (token === undefined)
 				throw new Error(`Can't find <token> object in request body`);
-			let newToken = await TokenModel.createToken(token);
+			let newToken = await TokenModel.createToken(token, request.t);
 			if (newToken.id === undefined)
 				throw new Error(`Can't find ID of newly created Token`);
-			response.json({ ok: true, token : newToken });
+			View.sendJsonResult(response, { token : newToken });
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error;
-			response.json({ ok : false, error: errorMessage  });
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -95,14 +117,13 @@ module.exports = (app, TokenModel, View) => {
 			const token = request.body.token
 			if (token === undefined)
 				throw new Error(`Can't find <token> object in request body`)
-			let editedToken = await TokenModel.editToken(token)
+			let editedToken = await TokenModel.editToken(token, request.t)
 			if (editedToken.id !== token.id)
 				throw new Error(`Edited Token ID does not match`)
-			response.json({ ok: true, token : editedToken })
+			View.sendJsonResult(response, { token : editedToken })
 		}
 		catch (error) {
-			const errorMessage = (error.message !== undefined) ? error.message : error
-			response.json({ ok : false, error: errorMessage  })
+			View.sendJsonError(response, error);
 		}
 	});
 
@@ -128,7 +149,7 @@ module.exports = (app, TokenModel, View) => {
 				throw new Error(`Token ID <${ tokenId }> not found`);
 			// No root property to control
 			const success = await TokenModel.deleteById(tokenId, recursive);
-			View.sendJsonResult(response, {success} );
+			View.sendJsonResult(response, {success});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

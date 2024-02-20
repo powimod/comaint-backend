@@ -14,12 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 'use strict'
 const assert = require('assert');
 const bcrypt = require('bcrypt');
 
-const userObjectHelper = require('../objects/user-object-helper.cjs')
+const { userObjectDef } = require('../objects/user-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class UserModel {
 	static #config = null;
@@ -34,21 +34,17 @@ class UserModel {
 		assert(this.#model !== null)
 	}
 
-	static async getIdList(filters) {
+	static async getUserIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId)
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
-
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(userObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+ 
 		let sql = `SELECT id FROM users ${whereClause}`
-		const result = await db.query(sql, sqlValues)
+		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
 		const idList = []
@@ -57,43 +53,32 @@ class UserModel {
 		return idList;
 	}
 
-	static async findUserCount(filters) {
+	static async findUserCount(filters = []) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId)
-		}
-		if (filters.administrator !== undefined) {
-			sqlFilters.push('administrator = ?')
-			sqlValues.push(filters.administrator)
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(userObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let sql = `SELECT COUNT(id) as counter FROM users ${whereClause}`
-		const result = await db.query(sql, sqlValues)
-		if (result.code) 
+		const result = await db.query(sql, fieldValues)
+		if (result.code)
 			throw new Error(result.code)
 		return result[0].counter;
 	}
 
-	static async getList(filters, params) {
+
+	static async findUserList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId);
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ');
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(userObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let resultsPerPage = params.resultsPerPage; 
 		if (resultsPerPage === undefined || isNaN(resultsPerPage)) 
@@ -101,7 +86,7 @@ class UserModel {
 		else
 			resultsPerPage = parseInt(resultsPerPage);
 		if (resultsPerPage < 1) resultsPerPage = 1;
-		sqlValues.push(resultsPerPage);
+		fieldValues.push(resultsPerPage);
 
 		let offset = params.offset; 
 		if (offset=== undefined || isNaN(resultsPerPage)) 
@@ -109,39 +94,37 @@ class UserModel {
 		else
 			offset = parseInt(offset);
 		if (offset < 0) offset = 0;
-		sqlValues.push(offset);
+		fieldValues.push(offset);
 
 		let sql = `SELECT * FROM users ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
-		// TODO order by
-		// TODO field selection 
 
-		const result = await db.query(sql, sqlValues);
+		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
 		const userList = [];
 		for (let userRecord of result) 
-			userList.push( userObjectHelper.convertUserFromDb(userRecord), /*filter=*/true );
+			userList.push( objectUtils.convertObjectFromDb(userObjectDef, userRecord, /*filter=*/true) )
 		return userList;
 	}
 
-	static async getUserById(idUser) {
+	static async getUserById(userId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (idUser === undefined)
-			throw new Error('Argument <idUser> required');
-		if (isNaN(idUser) === undefined)
-			throw new Error('Argument <idUser> is not a number');
+		if (userId === undefined)
+			throw new Error('Argument <userId> required');
+		if (isNaN(userId) === undefined)
+			throw new Error('Argument <userId> is not a number');
 		let sql = `SELECT * FROM users WHERE id = ?`;
-		const result = await db.query(sql, [idUser]);
+		const result = await db.query(sql, [userId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/false);
+		const user = objectUtils.convertObjectFromDb(userObjectDef, result[0], /*filter=*/false)
 		return user;
 	}
-
+	
 	static async getUserByEmail(email) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -153,26 +136,52 @@ class UserModel {
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const user = userObjectHelper.convertUserFromDb(result[0], /*filter=*/ false);
+		const user = objectUtils.convertObjectFromDb(userObjectDef, result[0], /*filter=*/false)
 		return user;
+	}
+	
+
+
+	static async getChildrenCountList(userId) {
+		if (userId === undefined)
+			throw new Error('Argument <userId> required');
+		if (isNaN(userId) === undefined)
+			throw new Error('Argument <userId> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql, result;
+		const childrenCounterList = {}
+
+		
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM tokens
+			WHERE id_user = ?
+			`
+		result = await db.query(sql, [ userId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Token'] = result[0].counter
+
+		return childrenCounterList;
 	}
 
 
-	static async createUser(user) {
+	static async createUser(user, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		// TODO pass i18n_t function to object helper
-		const error = userObjectHelper.controlObjectUser(user, /*fullCheck=*/true, /*checkId=*/false)
+		const error = objectUtils.controlObject(userObjectDef, user, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
-
-		// make a hash of the password
+		// Encrypt password
 		if (user.password === undefined || user.password === null)
 			throw new Error('User password missing')
 		await this.encryptPasswordIfPresent(user)
-		
-		const userDb = userObjectHelper.convertUserToDb(user)
+
+		const userDb = objectUtils.convertObjectToDb(userObjectDef, user)
 
 		const fieldNames = []
 		const markArray = []
@@ -194,22 +203,20 @@ class UserModel {
 		if (result.code)
 			throw new Error(result.code);
 		const userId = result.insertId;
-		user = this.getUserById(userId) // to get all properties with defaults values
+		user = this.getUserById(userId)
 		return user;
 	}
 
-	static async editUser(user) {
+	static async editUser(user, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		// TODO pass i18n_t function to object helper
-		const error = userObjectHelper.controlObjectUser(user, /*fullCheck=*/false, /*checkId=*/true)
+		const error = objectUtils.controlObject(userObjectDef, user, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
-
 		await this.encryptPasswordIfPresent(user)
 
-		const userDb = userObjectHelper.convertUserToDb(user)
+		const userDb = objectUtils.convertObjectToDb(userObjectDef, user)
 		const fieldNames = []
 		const sqlParams = []
 		for (let [propName, propValue] of Object.entries(userDb)) {
@@ -234,6 +241,7 @@ class UserModel {
 		return user;
 	}
 
+	
 	static async deleteById(userId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -253,6 +261,8 @@ class UserModel {
 			throw new Error(result.code);
 		return (result.affectedRows !== 0) 
 	}
+
+	
 	static async getTokenCount(userId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -278,13 +288,13 @@ class UserModel {
 		assert (user !== undefined)
 		assert (user.password !== undefined)
 		assert (password !== undefined)
-		const passwordValid = await bcrypt.compare(password, user.password);
-		return passwordValid
+		const isValid = await bcrypt.compare(password, user.password);
+		return isValid
 	}
 
 	static async encryptPasswordIfPresent(user) {
 		assert (user !== undefined)
-		if (user.password === undefined) 
+		if (user.password === undefined)
 			return
 		assert(this.#config.security.hashSalt !== undefined);
 		const saltRounds = this.#config.security.hashSalt;

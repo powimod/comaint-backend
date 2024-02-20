@@ -37,10 +37,11 @@ describe('Test user delete', () => {
 				expect(json.ok).to.be.a('boolean')
 					.and.to.be.equal(true)
 
-				expect(json).to.have.property('user')
-				expect(json.user).to.be.a('object')
+				expect(json).to.have.property('data')
+				expect(json.data).to.have.property('user')
+				expect(json.data.user).to.be.a('object')
 
-				userToDelete = json.user
+				userToDelete = json.data.user
 
 				expect(userToDelete).to.have.property('companyId')
 				expect(userToDelete.companyId).not.to.be.null

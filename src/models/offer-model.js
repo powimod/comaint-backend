@@ -14,14 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 'use strict'
 const assert = require('assert');
 
-const offerObjectHelper = require('../objects/offer-object-helper.cjs')
+const { offerObjectDef } = require('../objects/offer-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class OfferModel {
-
 	static #model = null;
 
 	static initialize = () => {
@@ -31,17 +30,17 @@ class OfferModel {
 		assert(this.#model !== null)
 	}
 
-	static async getIdList(filters) {
+	static async getOfferIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
-
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(offerObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+ 
 		let sql = `SELECT id FROM offers ${whereClause}`
-		const result = await db.query(sql, sqlValues)
+		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
 		const idList = []
@@ -50,16 +49,32 @@ class OfferModel {
 		return idList;
 	}
 
+	static async findOfferCount(filters = []) {
+		assert(filters !== undefined);
+		assert(this.#model !== null);
+		const db = this.#model.db;
 
-	static async getList(filters, params) {
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(offerObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+
+		let sql = `SELECT COUNT(id) as counter FROM offers ${whereClause}`
+		const result = await db.query(sql, fieldValues)
+		if (result.code)
+			throw new Error(result.code)
+		return result[0].counter;
+	}
+
+
+	static async findOfferList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ');
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(offerObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let resultsPerPage = params.resultsPerPage; 
 		if (resultsPerPage === undefined || isNaN(resultsPerPage)) 
@@ -67,7 +82,7 @@ class OfferModel {
 		else
 			resultsPerPage = parseInt(resultsPerPage);
 		if (resultsPerPage < 1) resultsPerPage = 1;
-		sqlValues.push(resultsPerPage);
+		fieldValues.push(resultsPerPage);
 
 		let offset = params.offset; 
 		if (offset=== undefined || isNaN(resultsPerPage)) 
@@ -75,73 +90,76 @@ class OfferModel {
 		else
 			offset = parseInt(offset);
 		if (offset < 0) offset = 0;
-		sqlValues.push(offset);
+		fieldValues.push(offset);
 
 		let sql = `SELECT * FROM offers ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
-		// TODO order by
-		// TODO field selection 
 
-		const result = await db.query(sql, sqlValues);
+		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
 		const offerList = [];
 		for (let offerRecord of result) 
-			offerList.push( offerObjectHelper.convertOfferFromDb(offerRecord) );
+			offerList.push( objectUtils.convertObjectFromDb(offerObjectDef, offerRecord, /*filter=*/true) )
 		return offerList;
 	}
 
-
-	static async getCount() {
+	static async getOfferById(offerId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		let sql = `SELECT COUNT(id) AS counter FROM offers`;
-		const result = await db.query(sql);
-		if (result.code) 
-			throw new Error(result.code);
-		return result[0].counter;
-	}
-
-
-
-	static async getOfferById(idOffer) {
-		assert(this.#model !== null);
-		const db = this.#model.db;
-		if (idOffer === undefined)
-			throw new Error('Argument <idOffer> required');
-		if (isNaN(idOffer) === undefined)
-			throw new Error('Argument <idOffer> is not a number');
+		if (offerId === undefined)
+			throw new Error('Argument <offerId> required');
+		if (isNaN(offerId) === undefined)
+			throw new Error('Argument <offerId> is not a number');
 		let sql = `SELECT * FROM offers WHERE id = ?`;
-		const result = await db.query(sql, [idOffer]);
+		const result = await db.query(sql, [offerId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const offer = offerObjectHelper.convertOfferFromDb(result[0]);
+		const offer = objectUtils.convertObjectFromDb(offerObjectDef, result[0], /*filter=*/false)
 		return offer;
 	}
-
-	static async getChildrenCountList(idOffer) {
-		if (idOffer === undefined)
-			throw new Error('Argument <idOffer> required');
-		if (isNaN(idOffer) === undefined)
-			throw new Error('Argument <idOffer> is not a number');
+	
+	static async getOfferByTitle(title) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-
-		const childrenCounterList = {}
-
-		let sql = `
-			SELECT COUNT(id) AS counter 
-			FROM subscriptions 
-			WHERE id_offer = ?
-			`
-		let result = await db.query(sql, [idOffer]);
+		if (title === undefined)
+			throw new Error('Argument <title> required');
+		let sql = `SELECT * FROM offers WHERE title = ?`;
+		const result = await db.query(sql, [title]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		childrenCounterList['subscriptions'] = result[0].counter
+		const offer = objectUtils.convertObjectFromDb(offerObjectDef, result[0], /*filter=*/false)
+		return offer;
+	}
+	
+
+
+	static async getChildrenCountList(offerId) {
+		if (offerId === undefined)
+			throw new Error('Argument <offerId> required');
+		if (isNaN(offerId) === undefined)
+			throw new Error('Argument <offerId> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql, result;
+		const childrenCounterList = {}
+
+		
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM subscriptions
+			WHERE id_offer = ?
+			`
+		result = await db.query(sql, [ offerId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Subscription'] = result[0].counter
 
 		sql = `
 			SELECT COUNT(companies.id) AS counter
@@ -149,26 +167,28 @@ class OfferModel {
 				ON subscriptions.id_company = companies.id 
 			WHERE id_offer = ?
 			`
-		result = await db.query(sql, [idOffer]);
+		result = await db.query(sql, [ offerId ]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		childrenCounterList['companies'] = result[0].counter
+		childrenCounterList['Company'] = result[0].counter
+
+
 
 		return childrenCounterList;
 	}
 
 
-	static async createOffer(offer) {
+	static async createOffer(offer, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = offerObjectHelper.controlObjectOffer(offer, /*fullCheck=*/true, /*checkId=*/false)
+		const error = objectUtils.controlObject(offerObjectDef, offer, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const offerDb = offerObjectHelper.convertOfferToDb(offer)
+		const offerDb = objectUtils.convertObjectToDb(offerObjectDef, offer)
 
 		const fieldNames = []
 		const markArray = []
@@ -185,8 +205,6 @@ class OfferModel {
 			INSERT INTO offers(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
@@ -196,15 +214,15 @@ class OfferModel {
 		return offer;
 	}
 
-	static async editOffer(offer) {
+	static async editOffer(offer, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = offerObjectHelper.controlObjectOffer(offer, /*fullCheck=*/false, /*checkId=*/true)
+		const error = objectUtils.controlObject(offerObjectDef, offer, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const offerDb = offerObjectHelper.convertOfferToDb(offer)
+		const offerDb = objectUtils.convertObjectToDb(offerObjectDef, offer)
 		const fieldNames = []
 		const sqlParams = []
 		for (let [propName, propValue] of Object.entries(offerDb)) {
@@ -221,9 +239,6 @@ class OfferModel {
 		`
 		sqlParams.push(offer.id) // WHERE clause
 
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
-
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
@@ -232,6 +247,7 @@ class OfferModel {
 		return offer;
 	}
 
+	
 	static async deleteById(offerId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -252,6 +268,7 @@ class OfferModel {
 		return (result.affectedRows !== 0) 
 	}
 
+	
 	static async getSubscriptionCount(offerId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -272,43 +289,6 @@ class OfferModel {
 			return true
 		return false
 	}
-
-	static async createOffer(offer) {
-		assert(this.#model !== null);
-		const db = this.#model.db;
-
-		// TODO pass i18n_t function to object helper
-		const error = offerObjectHelper.controlObjectOffer(offer, /*fullCheck=*/true, /*checkId=*/false)
-		if ( error)
-			throw new Error(error)
-
-		const offerDb = offerObjectHelper.convertOfferToDb(offer)
-
-		const fieldNames = []
-		const markArray = []
-		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(offerDb)) {
-			if (propValue === undefined)
-				continue
-			fieldNames.push(propName)
-			sqlParams.push(propValue)
-			markArray.push('?')
-		}
-
-		const sqlRequest = `
-			INSERT INTO offers(${fieldNames.join(', ')}) 
-			       VALUES (${markArray.join(', ')});
-		`;
-		
-		const result = await db.query(sqlRequest, sqlParams);
-		if (result.code)
-			throw new Error(result.code);
-		const offerId = result.insertId;
-		offer = this.getOfferById(offerId) // to get all properties with defaults values
-		return offer;
-	}
-
-
 }
 
 module.exports = () => {

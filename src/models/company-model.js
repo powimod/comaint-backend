@@ -14,37 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 'use strict'
 const assert = require('assert');
 
-const companyObjectHelper = require('../objects/company-object-helper.cjs')
+const { companyObjectDef } = require('../objects/company-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class CompanyModel {
-
 	static #model = null;
 
 	static initialize = () => {
 		assert(this.#model === null);
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
 	}
 
-	static async getIdList(filters) {
+	static async getCompanyIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.managerId !== undefined) {
-			sqlFilters.push('id_manager = ?')
-			sqlValues.push(filters.managerId)
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
-
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(companyObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+ 
 		let sql = `SELECT id FROM companies ${whereClause}`
-		const result = await db.query(sql, sqlValues)
+		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
 		const idList = []
@@ -53,22 +49,32 @@ class CompanyModel {
 		return idList;
 	}
 
+	static async findCompanyCount(filters = []) {
+		assert(filters !== undefined);
+		assert(this.#model !== null);
+		const db = this.#model.db;
 
-	static async getList(filters, params) {
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(companyObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+
+		let sql = `SELECT COUNT(id) as counter FROM companies ${whereClause}`
+		const result = await db.query(sql, fieldValues)
+		if (result.code)
+			throw new Error(result.code)
+		return result[0].counter;
+	}
+
+
+	static async findCompanyList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		sqlFilters.push('id = ?')
-		sqlValues.push(filters.companyId);
-		if (filters.managerId !== undefined) {
-			sqlFilters.push('id_manager = ?')
-			sqlValues.push(filters.managerId);
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ');
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(companyObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let resultsPerPage = params.resultsPerPage; 
 		if (resultsPerPage === undefined || isNaN(resultsPerPage)) 
@@ -76,7 +82,7 @@ class CompanyModel {
 		else
 			resultsPerPage = parseInt(resultsPerPage);
 		if (resultsPerPage < 1) resultsPerPage = 1;
-		sqlValues.push(resultsPerPage);
+		fieldValues.push(resultsPerPage);
 
 		let offset = params.offset; 
 		if (offset=== undefined || isNaN(resultsPerPage)) 
@@ -84,48 +90,123 @@ class CompanyModel {
 		else
 			offset = parseInt(offset);
 		if (offset < 0) offset = 0;
-		sqlValues.push(offset);
+		fieldValues.push(offset);
 
 		let sql = `SELECT * FROM companies ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
-		// TODO order by
-		// TODO field selection 
 
-		const result = await db.query(sql, sqlValues);
+		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
 		const companyList = [];
 		for (let companyRecord of result) 
-			companyList.push( companyObjectHelper.convertCompanyFromDb(companyRecord) );
+			companyList.push( objectUtils.convertObjectFromDb(companyObjectDef, companyRecord, /*filter=*/true) )
 		return companyList;
 	}
 
-	static async getCompanyById(idCompany) {
+	static async getCompanyById(companyId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (idCompany === undefined)
-			throw new Error('Argument <idCompany> required');
-		if (isNaN(idCompany) === undefined)
-			throw new Error('Argument <idCompany> is not a number');
+		if (companyId === undefined)
+			throw new Error('Argument <companyId> required');
+		if (isNaN(companyId) === undefined)
+			throw new Error('Argument <companyId> is not a number');
 		let sql = `SELECT * FROM companies WHERE id = ?`;
-		const result = await db.query(sql, [idCompany]);
+		const result = await db.query(sql, [companyId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const company = companyObjectHelper.convertCompanyFromDb(result[0]);
+		const company = objectUtils.convertObjectFromDb(companyObjectDef, result[0], /*filter=*/false)
 		return company;
 	}
+	
+	static async getCompanyByName(name) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		if (name === undefined)
+			throw new Error('Argument <name> required');
+		let sql = `SELECT * FROM companies WHERE name = ?`;
+		const result = await db.query(sql, [name]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		const company = objectUtils.convertObjectFromDb(companyObjectDef, result[0], /*filter=*/false)
+		return company;
+	}
+	
 
-	static async createCompany(company) {
+
+	static async getChildrenCountList(companyId) {
+		if (companyId === undefined)
+			throw new Error('Argument <companyId> required');
+		if (isNaN(companyId) === undefined)
+			throw new Error('Argument <companyId> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql, result;
+		const childrenCounterList = {}
+
+		
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM subscriptions
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Subscription'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM companies
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Company'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM users
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['User'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM units
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Unit'] = result[0].counter
+
+		return childrenCounterList;
+	}
+
+
+	static async createCompany(company, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = companyObjectHelper.controlObjectCompany(company, /*fullCheck=*/true, /*checkId=*/false)
+		const error = objectUtils.controlObject(companyObjectDef, company, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const companyDb = companyObjectHelper.convertCompanyToDb(company)
+		const companyDb = objectUtils.convertObjectToDb(companyObjectDef, company)
 
 		const fieldNames = []
 		const markArray = []
@@ -142,8 +223,6 @@ class CompanyModel {
 			INSERT INTO companies(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
@@ -153,15 +232,15 @@ class CompanyModel {
 		return company;
 	}
 
-	static async editCompany(company) {
+	static async editCompany(company, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = companyObjectHelper.controlObjectCompany(company, /*fullCheck=*/false, /*checkId=*/true)
+		const error = objectUtils.controlObject(companyObjectDef, company, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const companyDb = companyObjectHelper.convertCompanyToDb(company)
+		const companyDb = objectUtils.convertObjectToDb(companyObjectDef, company)
 		const fieldNames = []
 		const sqlParams = []
 		for (let [propName, propValue] of Object.entries(companyDb)) {
@@ -178,9 +257,6 @@ class CompanyModel {
 		`
 		sqlParams.push(company.id) // WHERE clause
 
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
-
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
@@ -189,6 +265,7 @@ class CompanyModel {
 		return company;
 	}
 
+	
 	static async deleteById(companyId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -208,6 +285,8 @@ class CompanyModel {
 			throw new Error(result.code);
 		return (result.affectedRows !== 0) 
 	}
+
+	
 	static async getSubscriptionCount(companyId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -276,7 +355,6 @@ class CompanyModel {
 			return true
 		return false
 	}
-
 }
 
 module.exports = () => {

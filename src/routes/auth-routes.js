@@ -27,18 +27,22 @@ exports.initialize = (app, authModel, View, config) => {
 	_authModel = authModel;
 
 	app.use( async (request, response, next) => {
+		console.log(`Cookie middleware : load access token for request ${request.url} ...`)
 		assert(_authModel !== null);
 		let userId = null;
 		let companyId = null;
 		const token = request.headers['x-access-token'];
-		if (token !== undefined) {
+		if (token === undefined) {
+			console.log(`Cookie middleware -> access token absent (anonymous request)`)
+		}
+		else {
 			try {
 				[userId, companyId] = await _authModel.checkAccessToken(token);
-				//console.log(`Cookie middleware -> cookie userId = ${ userId }`);
-				//console.log(`Cookie middleware -> cookie companyId = ${ companyId }`);
+				console.log(`Cookie middleware -> cookie userId = ${ userId }`);
+				console.log(`Cookie middleware -> cookie companyId = ${ companyId }`);
 			}
 			catch (error) {
-				//console.log(`Cookie middleware -> cookie error : ${ error.message ? error.message : error }`)
+				console.log(`Cookie middleware -> cookie error : ${ error.message ? error.message : error }`)
 				View.sendJsonError(response, error);
 				return;
 			}
@@ -48,44 +52,51 @@ exports.initialize = (app, authModel, View, config) => {
 		next();
 	});
 
-	app.post('/api/v1/auth/register', async (request, response) => { 
+	app.post('/api/v1/auth/register', async (request, response) => {
 		try {
 			const email = request.body.email;
 			if (email === undefined)
 				throw new Error(`Can't find <email> in request body`);
-
+			// TODO control password complexity
 			const password = request.body.password;
 			if (password === undefined)
 				throw new Error(`Can't find <password> in request body`);
+			if (password.length < 8)
+				throw new Error(request.t('error.too_short_data', {'object': 'password'}));
+			if (password.length > 70)
+				throw new Error(request.t('error.too_long_data', {'object': 'password'}));
 
-			// FIXME following tests should be done in UserModel with object helper control function
+			
 			const firstname = request.body.firstname
 			if (firstname === undefined)
 				throw new Error('firstname not found in request body'); 
 			if (firstname.length === 0)
 				throw new Error(request.t('error.empty_data', {'object': 'firstname'}));
+			
 			const lastname = request.body.lastname
 			if (lastname === undefined)
 				throw new Error('lastname not found in request body'); 
 			if (lastname.length === 0)
 				throw new Error(request.t('error.empty_data', {'object': 'lastname'}));
 			
+		
 			// make a random validation code which will be sent by email to unlock account
 			const validationCode = _authModel.generateValidationCode();
 			console.log(`Validation code is ${ validationCode }`); // TODO remove this
 
-
 			const result = await _authModel.register(email, password, firstname, lastname, validationCode, request.t);
 
-			const userId = result.userId;
+			const userId = result.userId; 
 			if (userId === undefined)
-				throw new Error('userId not found')
+				throw new Error('userId not found'); 
+
 
 			const companyId = result.companyId
 			if (companyId === undefined)
 				throw new Error('companyId not found')
 			if (companyId === null)
 				throw new Error('companyId is null')
+
 
 			await _authModel.sendRegisterValidationCode(validationCode, email, request.t);
 
@@ -96,14 +107,21 @@ exports.initialize = (app, authModel, View, config) => {
 			View.sendJsonResult(response, {
 				userId: userId,
 				companyId: companyId,
+				/*
 				firstname : firstname,
 				lastname : lastname,
+				administrator : administrator,
+				parkRole : parkRole,
+				stockRole : stockRole,
+				active : active,
+				accountLocked : accountLocked,
+				email: email,
+				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
 		}
 		catch (error) {
-			console.log(error)
 			View.sendJsonError(response, error);
 		}
 	});
@@ -141,6 +159,7 @@ exports.initialize = (app, authModel, View, config) => {
 				throw new Error(`Can't find <password> in request body`);
 
 			const result = await _authModel.login(email, password, request.t);
+			console.log(result)
 
 			const userId = result.userId; 
 			if (userId === undefined)
@@ -154,6 +173,7 @@ exports.initialize = (app, authModel, View, config) => {
 			const companyId = result.companyId;
 			if (companyId === undefined)
 				throw new Error('companyId not found');
+
 			
 			const firstname = result.firstname
 			if (firstname === undefined) 
@@ -163,8 +183,29 @@ exports.initialize = (app, authModel, View, config) => {
 			if (lastname === undefined) 
 				throw new Error('lastname not found'); 
 			
+			const administrator = result.administrator
+			if (administrator === undefined) 
+				throw new Error('administrator not found'); 
+			
+			const parkRole = result.parkRole
+			if (parkRole === undefined) 
+				throw new Error('parkRole not found'); 
+			
+			const stockRole = result.stockRole
+			if (stockRole === undefined) 
+				throw new Error('stockRole not found'); 
+			
+			const active = result.active
+			if (active === undefined) 
+				throw new Error('active not found'); 
+			
+			const accountLocked = result.accountLocked
+			if (accountLocked === undefined) 
+				throw new Error('accountLocked not found'); 
+			
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
+
 			const newRefreshToken = await _authModel.generateRefreshToken(userId, companyId);
 
 			View.sendJsonResult(response, {
@@ -172,6 +213,12 @@ exports.initialize = (app, authModel, View, config) => {
 				companyId: result.companyId,
 				firstname : firstname,
 				lastname : lastname,
+				administrator : administrator,
+				parkRole : parkRole,
+				stockRole : stockRole,
+				active : active,
+				accountLocked : accountLocked,
+				email: result.email,
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
@@ -206,18 +253,22 @@ exports.initialize = (app, authModel, View, config) => {
 			if (! tokenFound) {
 				// if a token is not found, it should be an attempt to usurp cookie :
 				// since a refresh token is deleted when used, it will not be found with a second attempt to use it.
+				console.log(`auth/refresh - detect an attempt to reuse a token : lock account userId = ${userId}`)
 				await _authModel.lockAccount(userId);
 				throw new Error('Attempt to reuse a token');
 			}
 
 			await _authModel.deleteRefreshToken(tokenId);
 
-			if (await _authModel.checkAccountLocked(userId)) 
+			if (await _authModel.checkAccountLocked(userId)) {
+				console.log(`auth/refresh - account locked userId = ${userId}`)
 				throw new Error('Account locked')
+			}
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId)
 			const newRefreshToken = await _authModel.generateRefreshToken(userId, companyId)
 
+			console.log(`auth/refresh - send new tokens to userId ${userId}`)
 			View.sendJsonResult(response, {
 				'userId' : userId,
 				'companyId': companyId,
@@ -245,111 +296,8 @@ exports.initialize = (app, authModel, View, config) => {
 			console.error("auth/refresh - error:", (error.message) ? error.message : error)
 			View.sendJsonError(response, error);
 		}
-	})
+	});
 
-
-	app.post('/api/v1/auth/locked-account/send-code', async (request, response) => {
-		try {
-			const userId = request.userId
-			if (request.userId === null)
-				throw new Error(`User not connected`);
-			assert (! isNaN(userId))
-			
-			const validationCode = _authModel.generateValidationCode();
-			console.log(`Unlock account validation code is ${ validationCode }`); // TODO remove this
-
-			const user = await _authModel.storeUnlockAccountCode(userId, validationCode, request.t);
-			await _authModel.sendUnlockAccountValidationCode(validationCode, user.email, request.t);
-
-			const message = request.t('unlock_account.mail_sent_info', { email: user.email })
-			View.sendJsonResult(response, {message})
-		}
-		catch (error) {
-			View.sendJsonError(response, error);
-		}
-	})
-
-	app.post('/api/v1/auth/locked-account/validate-code', async (request, response) => {
-		try {
-			const userId = request.userId
-			if (request.userId === null)
-				throw new Error(`User not connected`);
-			assert (! isNaN(userId))
-
-			let validationCode = request.body.validationCode;
-			if (validationCode === undefined)
-				throw new Error(`Can't find <validationCode> in request body`);
-			if (isNaN(validationCode))
-				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
-			validationCode = parseInt(validationCode);
-			if (validationCode < 10000 || validationCode > 99999)
-				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
-
-			const isValid = await _authModel.unlockAccount(userId, validationCode, request.t);
-
-			View.sendJsonResult(response, {isValid})
-		}
-		catch (error) {
-			View.sendJsonError(response, error);
-		}
-	})
-
-
-	app.post('/api/v1/auth/forgotten-password/send-code', async (request, response) => {
-		try {
-			let email = request.body.email;
-			if (email === undefined)
-				throw new Error(`Can't find <email> in request body`);
-			email = email.trim()
-			if (email.length === 0)
-				throw new Error(request.t('error.invalid_data', {'object': 'email'}));
-			
-			const validationCode = _authModel.generateValidationCode();
-			console.log(`Password reset validation code is ${ validationCode }`); // TODO remove this
-
-			await _authModel.storeForgottenPasswordCode(email, validationCode, request.t);
-			await _authModel.sendForgottenPasswordValidationCode(validationCode, email, request.t);
-
-			const message = request.t('forgotten_password.mail_sent_info', { email })
-			View.sendJsonResult(response, {message})
-		}
-		catch (error) {
-			View.sendJsonError(response, error);
-		}
-	})
-
-
-	app.post('/api/v1/auth/forgotten-password/change-password', async (request, response) => {
-		try {
-			let email = request.body.email;
-			if (email === undefined)
-				throw new Error(`Can't find <email> in request body`);
-			email = email.trim()
-			if (email.length === 0)
-				throw new Error(request.t('error.invalid_data', {'object': 'email'}));
-			
-			let validationCode = request.body.validationCode;
-			if (validationCode === undefined)
-				throw new Error(`Can't find <validationCode> in request body`);
-			if (isNaN(validationCode))
-				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
-			validationCode = parseInt(validationCode);
-			if (validationCode < 10000 || validationCode > 99999)
-				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
-
-			let newPassword = request.body.newPassword;
-			if (newPassword === undefined)
-				throw new Error(`Can't find <newPassword> in request body`);
-			newPassword = newPassword.trim();
-
-			const changed = await _authModel.changePassword(email, validationCode, newPassword, request.t);
-
-			View.sendJsonResult(response, {changed})
-		}
-		catch (error) {
-			View.sendJsonError(response, error);
-		}
-	})
 
 }
 

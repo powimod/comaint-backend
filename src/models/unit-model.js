@@ -14,37 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 'use strict'
 const assert = require('assert');
 
-const unitObjectHelper = require('../objects/unit-object-helper.cjs')
+const { unitObjectDef } = require('../objects/unit-object-def.cjs')
+const objectUtils = require('../objects/object-util.cjs')
 
 class UnitModel {
-
 	static #model = null;
 
 	static initialize = () => {
 		assert(this.#model === null);
 		const ModelSingleton = require('./model.js');
 		this.#model = ModelSingleton.getInstance();
+		assert(this.#model !== null)
 	}
 
-	static async getIdList(filters) {
+	static async getUnitIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId)
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ')
-
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+ 
 		let sql = `SELECT id FROM units ${whereClause}`
-		const result = await db.query(sql, sqlValues)
+		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
 		const idList = []
@@ -53,20 +49,32 @@ class UnitModel {
 		return idList;
 	}
 
+	static async findUnitCount(filters = []) {
+		assert(filters !== undefined);
+		assert(this.#model !== null);
+		const db = this.#model.db;
 
-	static async getList(filters, params) {
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
+
+		let sql = `SELECT COUNT(id) as counter FROM units ${whereClause}`
+		const result = await db.query(sql, fieldValues)
+		if (result.code)
+			throw new Error(result.code)
+		return result[0].counter;
+	}
+
+
+	static async findUnitList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const sqlValues = [];
-		const sqlFilters = [];
-		if (filters.companyId !== undefined) {
-			sqlFilters.push('id_company = ?')
-			sqlValues.push(filters.companyId);
-		}
-		const whereClause = sqlFilters.length === 0 ? '' : 'WHERE ' + sqlFilters.join(' AND ');
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const whereClause = fieldNames.length === 0 ? '' :
+			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
 		let resultsPerPage = params.resultsPerPage; 
 		if (resultsPerPage === undefined || isNaN(resultsPerPage)) 
@@ -74,7 +82,7 @@ class UnitModel {
 		else
 			resultsPerPage = parseInt(resultsPerPage);
 		if (resultsPerPage < 1) resultsPerPage = 1;
-		sqlValues.push(resultsPerPage);
+		fieldValues.push(resultsPerPage);
 
 		let offset = params.offset; 
 		if (offset=== undefined || isNaN(resultsPerPage)) 
@@ -82,48 +90,64 @@ class UnitModel {
 		else
 			offset = parseInt(offset);
 		if (offset < 0) offset = 0;
-		sqlValues.push(offset);
+		fieldValues.push(offset);
 
 		let sql = `SELECT * FROM units ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
-		// TODO order by
-		// TODO field selection 
 
-		const result = await db.query(sql, sqlValues);
+		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
 		const unitList = [];
 		for (let unitRecord of result) 
-			unitList.push( unitObjectHelper.convertUnitFromDb(unitRecord) );
+			unitList.push( objectUtils.convertObjectFromDb(unitObjectDef, unitRecord, /*filter=*/true) )
 		return unitList;
 	}
 
-	static async getUnitById(idUnit) {
+	static async getUnitById(unitId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (idUnit === undefined)
-			throw new Error('Argument <idUnit> required');
-		if (isNaN(idUnit) === undefined)
-			throw new Error('Argument <idUnit> is not a number');
+		if (unitId === undefined)
+			throw new Error('Argument <unitId> required');
+		if (isNaN(unitId) === undefined)
+			throw new Error('Argument <unitId> is not a number');
 		let sql = `SELECT * FROM units WHERE id = ?`;
-		const result = await db.query(sql, [idUnit]);
+		const result = await db.query(sql, [unitId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const unit = unitObjectHelper.convertUnitFromDb(result[0]);
+		const unit = objectUtils.convertObjectFromDb(unitObjectDef, result[0], /*filter=*/false)
 		return unit;
 	}
+	
 
-	static async createUnit(unit) {
+
+	static async getChildrenCountList(unitId) {
+		if (unitId === undefined)
+			throw new Error('Argument <unitId> required');
+		if (isNaN(unitId) === undefined)
+			throw new Error('Argument <unitId> is not a number');
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		let sql, result;
+		const childrenCounterList = {}
+
+		
+
+		return childrenCounterList;
+	}
+
+
+	static async createUnit(unit, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = unitObjectHelper.controlObjectUnit(unit, /*fullCheck=*/true, /*checkId=*/false)
+		const error = objectUtils.controlObject(unitObjectDef, unit, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const unitDb = unitObjectHelper.convertUnitToDb(unit)
+		const unitDb = objectUtils.convertObjectToDb(unitObjectDef, unit)
 
 		const fieldNames = []
 		const markArray = []
@@ -140,8 +164,6 @@ class UnitModel {
 			INSERT INTO units(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
@@ -151,18 +173,18 @@ class UnitModel {
 		return unit;
 	}
 
-	static async editUnit(unit) {
+	static async editUnit(unit, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = unitObjectHelper.controlObjectUnit(unit, /*fullCheck=*/false, /*checkId=*/true)
+		const error = objectUtils.controlObject(unitObjectDef, unit, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const unitDb = unitObjectHelper.convertUnitToDb(unit)
+		const unitDb = objectUtils.convertObjectToDb(unitObjectDef, unit)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(userDb)) {
+		for (let [propName, propValue] of Object.entries(unitDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)
@@ -176,9 +198,6 @@ class UnitModel {
 		`
 		sqlParams.push(unit.id) // WHERE clause
 
-		//console.log("SQL request", sqlRequest);
-		//console.log("SQL params ", sqlParams);
-
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
@@ -187,6 +206,7 @@ class UnitModel {
 		return unit;
 	}
 
+	
 	static async deleteById(unitId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
@@ -207,10 +227,11 @@ class UnitModel {
 		return (result.affectedRows !== 0) 
 	}
 
+	
+
 	static async hasChildren(unitId) {
 		return false
 	}
-
 }
 
 module.exports = () => {

@@ -15,6 +15,7 @@
  */
 
 
+
 'use script';
 const assert = require('assert');
 const {withAuth} = require('./auth-routes');
@@ -45,8 +46,12 @@ module.exports = (app, UserModel, View) => {
 				resultsPerPage : resultsPerPage,
 				offset : offset
 			};
-			const list = await UserModel.getList(filters, params);
-			View.sendJsonResult(response, { userList: list } );
+			const userList = await UserModel.findUserList(filters, params);
+			for (const user of userList) {
+				// remove secret property [password]
+				delete user['password']
+			}
+			View.sendJsonResult(response, { userList });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -69,30 +74,55 @@ module.exports = (app, UserModel, View) => {
 			// control root property 
 			if (request.companyId !== user.companyId)
 				throw new Error('Unauthorized access');
-			delete user.password
-			View.sendJsonResult(response, { user: user} );
+			// remove secret property [password]
+			delete user['password']
+			View.sendJsonResult(response, { user });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
 		}
 	});
 
+
+	app.get('/api/v1/user/:userId/children-count', withAuth, async (request, response) => {
+		let userId = request.params.userId;
+		assert (userId !== undefined);
+		if (isNaN(userId)) {
+			View.sendJsonError(response, `Offer ID <${ userId}> is not a number`);
+			return;
+		}
+		userId = parseInt(userId);
+		try {
+			const childrenCountList = await OfferModel.getChildrenCountList(userId);
+			if (childrenCountList === null)
+				throw new Error(`Offer ID <${ userId }> not found`);
+			View.sendJsonResult(response, { childrenCountList } );
+		}
+		catch (error) {
+			View.sendJsonError(response, error);
+		}
+	})
+
+
+
 	app.post('/api/v1/user/create', withAuth, async (request, response) => {
 		try {
 			const companyId = request.companyId
 			assert(companyId !== undefined)
 			assert(companyId !== null)
+
 			const user = request.body.user;
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`);
+
 			user.companyId = companyId
-			// TODO  encrypt password !!! (see auth-model.js function register)
-			let newUser = await UserModel.createUser(user);
+
+			let newUser = await UserModel.createUser(user, request.t);
 			if (newUser.id === undefined)
 				throw new Error(`Can't find ID of newly created User`);
-			delete newUser.password
-			// TODO should use View.sendJsonResult
-			View.sendJsonResult(response, { user: newUser} );
+			// remove secret property [password]
+			delete newUser['password']
+			View.sendJsonResult(response, { user : newUser });
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -104,12 +134,12 @@ module.exports = (app, UserModel, View) => {
 			const user = request.body.user
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`)
-			if (user.password !== undefined)
-				throw new Error(`Using this route to change user password is forbidden`)
-			let editedUser = await UserModel.editUser(user)
+			let editedUser = await UserModel.editUser(user, request.t)
 			if (editedUser.id !== user.id)
 				throw new Error(`Edited User ID does not match`)
-			View.sendJsonResult(response, { user: editedUser} );
+			// remove secret property [password]
+			delete editedUser['password']
+			View.sendJsonResult(response, { user : editedUser })
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -138,9 +168,9 @@ module.exports = (app, UserModel, View) => {
 				throw new Error(`User ID <${ userId }> not found`);
 			// control root property 
 			if (request.companyId !== user.companyId)
-				throw new Error(`Unauthorized access : TokenCompanyId=${request.companyId} UserCompanyID=${user.companyId}`);
+				throw new Error('Unauthorized access');
 			const success = await UserModel.deleteById(userId, recursive);
-			View.sendJsonResult(response, {success} );
+			View.sendJsonResult(response, {success});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);

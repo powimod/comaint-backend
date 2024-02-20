@@ -103,7 +103,7 @@ class AuthModel {
 		})
 
 		const administrator = false
-		const parkRole = 0
+		const parkRole = 0 // FIXME should not be 0
 		const stockRole = 0
 		const active = true
 		const accountLocked = true // account locked
@@ -178,7 +178,12 @@ class AuthModel {
 			companyId: user.companyId,
 			email : user.email,
 			firstname: user.firstname,
-			lastname: user.lastname
+			lastname: user.lastname,
+			administrator: user.administrator,
+			parkRole: user.parkRole,
+			stockRole: user.stockRole,
+			active: user.active,
+			accountLocked: user.accountLocked
 		}
 	}
 
@@ -504,7 +509,10 @@ class AuthModel {
 			password: password, 
 			administrator : true,
 			firstname: 'Comaint',
-			lastname: 'Administrator'
+			lastname: 'Administrator',
+			accountLocked: false,
+			active: true,
+			phone: '', // FIXME
 		})
 	}
 
