@@ -106,8 +106,8 @@ exports.initialize = (app, authModel, View, config) => {
 
 			View.sendJsonResult(response, {
 				userId: userId,
+				/* TODO  issue-19
 				companyId: companyId,
-				/*
 				firstname : firstname,
 				lastname : lastname,
 				administrator : administrator,
@@ -141,7 +141,9 @@ exports.initialize = (app, authModel, View, config) => {
 				throw new Error(request.t('error.invalid_data', {'object': 'validationCode'}));
 
 			await _authModel.validateRegistration(userId, validationCode, request.t);
-			View.sendJsonResult(response, {});
+			View.sendJsonResult(response, {
+				userId // send userId to make API-Lib detect context change and to reload context
+			});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -165,16 +167,17 @@ exports.initialize = (app, authModel, View, config) => {
 			if (userId === undefined)
 				throw new Error('userId not found'); 
 
+			const companyId = result.companyId;
+			if (companyId === undefined)
+				throw new Error('companyId not found');
+
+			// FIXME issue-19 - should not return all informations
+			/* 
 			if (result.email === undefined)
 				throw new Error('email not found'); 
 			if (result.email !== email)
 				throw new Error('email is not valid'); 
 
-			const companyId = result.companyId;
-			if (companyId === undefined)
-				throw new Error('companyId not found');
-
-			
 			const firstname = result.firstname
 			if (firstname === undefined) 
 				throw new Error('firstname not found'); 
@@ -202,6 +205,7 @@ exports.initialize = (app, authModel, View, config) => {
 			const accountLocked = result.accountLocked
 			if (accountLocked === undefined) 
 				throw new Error('accountLocked not found'); 
+				*/
 			
 
 			const newAccessToken  = await _authModel.generateAccessToken(userId, companyId);
@@ -210,6 +214,7 @@ exports.initialize = (app, authModel, View, config) => {
 
 			View.sendJsonResult(response, {
 				userId : result.userId,
+				/* TODO issue-19
 				companyId: result.companyId,
 				firstname : firstname,
 				lastname : lastname,
@@ -219,6 +224,7 @@ exports.initialize = (app, authModel, View, config) => {
 				active : active,
 				accountLocked : accountLocked,
 				email: result.email,
+				*/
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			});
@@ -234,7 +240,8 @@ exports.initialize = (app, authModel, View, config) => {
 			if (refreshToken === undefined)
 				throw new Error(`Can't find <refreshToken> in request body`);
 			await _authModel.logout(refreshToken, request.t);
-			View.sendJsonResult(response, {});
+			// send userId to null to make API-Lib detect context change
+			View.sendJsonResult(response, {userId:null});
 		}
 		catch (error) {
 			View.sendJsonError(response, error);
@@ -271,7 +278,7 @@ exports.initialize = (app, authModel, View, config) => {
 			console.log(`auth/refresh - send new tokens to userId ${userId}`)
 			View.sendJsonResult(response, {
 				'userId' : userId,
-				'companyId': companyId,
+				/* TODO issue-19 : 'companyId': companyId, */
 				'access-token': newAccessToken,
 				'refresh-token': newRefreshToken
 			})
@@ -288,16 +295,13 @@ exports.initialize = (app, authModel, View, config) => {
 			if (request.userId !== null) {
 				context = await _authModel.getContext(request.userId);
 			}
-			View.sendJsonResult(response, {
-				'context': context
-			})
+			View.sendJsonResult(response, { context })
 		}
 		catch (error) {
 			console.error("auth/refresh - error:", (error.message) ? error.message : error)
 			View.sendJsonError(response, error);
 		}
 	});
-
 
 }
 
