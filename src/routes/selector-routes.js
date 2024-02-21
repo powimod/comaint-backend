@@ -20,13 +20,13 @@
 const assert = require('assert')
 const {withAuth} = require('./auth-routes')
 
-module.exports = (app, OfferModel, View) => {
+module.exports = (app, SelectorModel, View) => {
 
-	app.get('/api/v1/selector/request', withAuth, async (request, response) => {
-		/*
+	app.get('/api/v1/selector/request', /* TODO enable withAuth,*/ async (request, response) => {
 		const filters = {}
-		assert(request.companyId !== undefined)
+		// TODO enable : assert(request.companyId !== undefined)
 		try {
+			/* TODO enable
 			if (filters.companyId === undefined) {
 				filters.companyId = request.companyId
 			}
@@ -34,19 +34,13 @@ module.exports = (app, OfferModel, View) => {
 				if (filters.companyId !== request.companyId)
 					throw new Error('Unauthorized access')
 			}
-			let resultsPerPage = request.query.resultsPerPage
-			let offset = request.query.offset
-			const params = {
-				resultsPerPage : resultsPerPage,
-				offset : offset
-			}
-			const selectorList = await OfferModel.findOfferList(filters, params)
-			View.sendJsonResult(response, { selectorList })
+			*/
+			const results = await SelectorModel.query(filters)
+			View.sendJsonResult(response, { results })
 		}
 		catch (error) {
 			View.sendJsonError(response, error)
 		}
-		*/
 	})
 }
 

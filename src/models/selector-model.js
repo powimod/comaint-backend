@@ -131,7 +131,7 @@ class SelectorModel {
 		}
 
 		// print a report
-		if (true) {
+		if (false) {
 			let floor = -1
 			for (const floorElementArray of this.#floorArray){
 				floor++
