@@ -21,20 +21,66 @@ const assert = require('assert');
 class SelectorModel {
 	static #model = null;
 
+	static randomParentId = (id) => {
+		return parseInt(Math.random() * 1000)
+	}
+	static randomChildrenCount = (id) => {
+		return parseInt(Math.random() * 1000)
+	}
+
 	static #elementList = {
-		'equipment-family' :  {},
-		'equipment-type' :  {},
-		'equipment' :  {},
-		'equipment-unit' :  {},
-		'equipment-section' :  {},
-		'workorder': {},
-		'intervention': {},
-		'article-category' :  {},
-		'article-subcategory' :  {},
-		'article' :  {},
-		'article-unit' :  {},
-		'article-section' :  {},
-		'nomenclature' :  {},
+		'equipment-family': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'equipment-type': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'equipment': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'equipment-unit': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'equipment-section': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'workorder': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'intervention': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'article-category': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'article-subcategory': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'article': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'article-unit': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'article-section': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		},
+		'nomenclature': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.randomChildrenCount
+		}
 	}
 
 	static #linkArray = [
@@ -66,6 +112,7 @@ class SelectorModel {
 
 		// initialize properties of each element
 		for (const [elementName, element] of Object.entries(this.#elementList)) {
+			assert(typeof(element.findParentIdFunction) == 'function')
 			element.name = elementName
 			element.children = []
 			element.parents = []
@@ -141,14 +188,134 @@ class SelectorModel {
 			}
 		}
 
+		//this.query({ 'equipment': 127, 'article': 124 })
+		this.query({ 'equipment': 127 })
 	}
+
+
+
 
 	static async query(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		return null;
+		// initialize result array
+		const resultList = {}
+		for (const element of this.#elementArray) {
+			const result = {
+				name: element.name,
+				type: null // unknown
+			}
+			const elementFilterValue = filters[element.name]
+			if (elementFilterValue !== undefined) {
+				if (isNaN(elementFilterValue))
+					throw new Error(`Filter ${element.name} value is not a number`)
+				result.type = 'selector'
+				result.id = parseInt(elementFilterValue)
+			}
+			resultList[element.name] = result
+		}
+
+
+		//===== find element ID from children known element ID
+		// for each floor from highest to lowest
+		for (let floor = this.#floorArray.length-1; floor >= 0; floor--) {
+			const floorElementArray = this.#floorArray[floor]
+			// for each element on this floor
+			for (const element of floorElementArray) {
+				const result = resultList[element.name]
+				assert(result !== undefined)
+				// ignore element if its result is already known
+				if (result.type !== null)
+					continue
+				let elementId = null
+				// for each child of the current element
+				for (const childElement of element.children) {
+					const childResult = resultList[childElement.name]
+					assert(childResult.type !== undefined)
+					if (childResult.type === null)
+						continue
+					assert(childResult.id !== undefined)
+					assert(typeof(element.findParentIdFunction) == 'function')
+					const parentId = element.findParentIdFunction(childResult.id)
+					if (elementId !== null && elementId !== parentId)
+						throw new Error(`Different ID found for element ${element.name}`)
+					elementId = parentId
+				}
+				if (elementId === null) 
+					continue
+				result.type = 'element'
+				result.id = elementId
+			}
+		}
+
+		const recursivelyBuildParentFilters = (elementResult, level=0) => {
+			assert(typeof(elementResult) == 'object')
+			console.log(`- level ${level} - Search parent of ${elementResult.name}`)
+			const element = this.#elementList[elementResult.name]
+			assert(element !== undefined)
+			if (elementResult.id !== undefined) {
+				console.log("	- immediat ", elementResult.name, "=", elementResult.id )
+				//return [ { elementResult.name : elementResult.id } ]
+				return
+			}
+			const parentFilters = []
+			for (const parentElement of element.parents) {
+				console.log("	- parent", parentElement.name)
+				const parentElementResult = resultList[parentElement.name]
+				assert(parentElementResult !== undefined)
+				const parentFilters = recursivelyBuildParentFilters(parentElementResult, level+1)
+
+			}
+			return parentFilters 
+		}
+
+		// for each floor from lowest to highest 
+		for (let floor = 0 ; floor < this.#floorArray.length; floor++) {
+			const floorElementArray = this.#floorArray[floor]
+			// for each element on this floor
+			for (const element of floorElementArray) {
+				const result = resultList[element.name]
+				assert(result !== undefined)
+				// ignore element if its result is already known
+				if (result.type !== null)
+					continue
+				const parentFilters = recursivelyBuildParentFilters(result)
+				/*
+				for (const parentElement of element.parents) {
+					const parentResult = resultList[parentElement.name]
+					assert(parentResult.type !== undefined)
+					console.log("dOm================", parentResult)
+					assert(parentResult.id  !== undefined)
+					parentFilters[parentResult.name] = parentResult.id
+				}
+				*/
+				assert(typeof(element.findChildrenCountFunction) == 'function')
+				result.type = 'counter'
+				result.count = element.findChildrenCountFunction(parentFilters)
+			}
+		}
+
+		const resultArray = Object.values(resultList)
+
+		if (true === true) {
+			for (const result of resultArray){
+				switch (result.type) {
+					case 'element' :
+					case 'selector' :
+						console.log(`- ${result.name} : ${result.type} ID=${result.id}`)
+						break
+					case 'counter' :
+						console.log(`- ${result.name} : ${result.type} count=${result.count}`)
+						break
+					default:
+						assert(true == false)
+				}
+			}
+		}
+
+		return resultArray;
 	}
 
 }
