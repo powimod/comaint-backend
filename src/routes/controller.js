@@ -33,7 +33,8 @@ class Controller {
 	#UserRoutes = null;
 	#TokenRoutes = null;
 	#UnitRoutes = null;
-	
+
+	#SelectorRoutes = null;
 
 	initialize(config, model, view) {
 		if (! config instanceof Object)
@@ -113,6 +114,8 @@ class Controller {
 		this.#UserRoutes = require('./user-routes.js')(this.#app, this.#model.getUserModel(), this.#view);
 		this.#TokenRoutes = require('./token-routes.js')(this.#app, this.#model.getTokenModel(), this.#view);
 		this.#UnitRoutes = require('./unit-routes.js')(this.#app, this.#model.getUnitModel(), this.#view);
+
+		this.#SelectorRoutes = require('./selector-routes.js')(this.#app, this.#model.getSelectorModel(), this.#view);
 	}
 
 	get config() {
@@ -144,6 +147,9 @@ class Controller {
 		return this.#UnitRoutes;
 	}
 	
+	getSelectorRoutes() {
+		return this.#SelectorRoutes;
+	}
 
 	async run () {
 		if (this.#app === null)
