@@ -33,7 +33,27 @@ class Controller {
 	#UserRoutes = null;
 	#TokenRoutes = null;
 	#UnitRoutes = null;
-
+	#SectionRoutes = null;
+	#EquipmentFamilyRoutes = null;
+	#EquipmentTypeRoutes = null;
+	#EquipmentRoutes = null;
+	#ArticleCategoryRoutes = null;
+	#ArticleSubCategoryRoutes = null;
+	#ArticleRoutes = null;
+	#ComponentRoutes = null;
+	#NomenclatureRoutes = null;
+	#InventoryRoutes = null;
+	#WorkOrderRoutes = null;
+	#AssignationRoutes = null;
+	#ArticleToChangeRoutes = null;
+	#InterventionRoutes = null;
+	#IntervenantRoutes = null;
+	#ChangedArticleRoutes = null;
+	#SupplierRoutes = null;
+	#CatalogRoutes = null;
+	#OrderRoutes = null;
+	#OrderLineRoutes = null;
+	
 	#SelectorRoutes = null;
 
 	initialize(config, model, view) {
@@ -114,6 +134,26 @@ class Controller {
 		this.#UserRoutes = require('./user-routes.js')(this.#app, this.#model.getUserModel(), this.#view);
 		this.#TokenRoutes = require('./token-routes.js')(this.#app, this.#model.getTokenModel(), this.#view);
 		this.#UnitRoutes = require('./unit-routes.js')(this.#app, this.#model.getUnitModel(), this.#view);
+		this.#SectionRoutes = require('./section-routes.js')(this.#app, this.#model.getSectionModel(), this.#view);
+		this.#EquipmentFamilyRoutes = require('./equipment-family-routes.js')(this.#app, this.#model.getEquipmentFamilyModel(), this.#view);
+		this.#EquipmentTypeRoutes = require('./equipment-type-routes.js')(this.#app, this.#model.getEquipmentTypeModel(), this.#view);
+		this.#EquipmentRoutes = require('./equipment-routes.js')(this.#app, this.#model.getEquipmentModel(), this.#view);
+		this.#ArticleCategoryRoutes = require('./article-category-routes.js')(this.#app, this.#model.getArticleCategoryModel(), this.#view);
+		this.#ArticleSubCategoryRoutes = require('./article-sub-category-routes.js')(this.#app, this.#model.getArticleSubCategoryModel(), this.#view);
+		this.#ArticleRoutes = require('./article-routes.js')(this.#app, this.#model.getArticleModel(), this.#view);
+		this.#ComponentRoutes = require('./component-routes.js')(this.#app, this.#model.getComponentModel(), this.#view);
+		this.#NomenclatureRoutes = require('./nomenclature-routes.js')(this.#app, this.#model.getNomenclatureModel(), this.#view);
+		this.#InventoryRoutes = require('./inventory-routes.js')(this.#app, this.#model.getInventoryModel(), this.#view);
+		this.#WorkOrderRoutes = require('./work-order-routes.js')(this.#app, this.#model.getWorkOrderModel(), this.#view);
+		this.#AssignationRoutes = require('./assignation-routes.js')(this.#app, this.#model.getAssignationModel(), this.#view);
+		this.#ArticleToChangeRoutes = require('./article-to-change-routes.js')(this.#app, this.#model.getArticleToChangeModel(), this.#view);
+		this.#InterventionRoutes = require('./intervention-routes.js')(this.#app, this.#model.getInterventionModel(), this.#view);
+		this.#IntervenantRoutes = require('./intervenant-routes.js')(this.#app, this.#model.getIntervenantModel(), this.#view);
+		this.#ChangedArticleRoutes = require('./changed-article-routes.js')(this.#app, this.#model.getChangedArticleModel(), this.#view);
+		this.#SupplierRoutes = require('./supplier-routes.js')(this.#app, this.#model.getSupplierModel(), this.#view);
+		this.#CatalogRoutes = require('./catalog-routes.js')(this.#app, this.#model.getCatalogModel(), this.#view);
+		this.#OrderRoutes = require('./order-routes.js')(this.#app, this.#model.getOrderModel(), this.#view);
+		this.#OrderLineRoutes = require('./order-line-routes.js')(this.#app, this.#model.getOrderLineModel(), this.#view);
 
 		this.#SelectorRoutes = require('./selector-routes.js')(this.#app, this.#model.getSelectorModel(), this.#view);
 	}
@@ -145,6 +185,86 @@ class Controller {
 	
 	getUnitRoutes() {
 		return this.#UnitRoutes;
+	}
+	
+	getSectionRoutes() {
+		return this.#SectionRoutes;
+	}
+	
+	getEquipmentFamilyRoutes() {
+		return this.#EquipmentFamilyRoutes;
+	}
+	
+	getEquipmentTypeRoutes() {
+		return this.#EquipmentTypeRoutes;
+	}
+	
+	getEquipmentRoutes() {
+		return this.#EquipmentRoutes;
+	}
+	
+	getArticleCategoryRoutes() {
+		return this.#ArticleCategoryRoutes;
+	}
+	
+	getArticleSubCategoryRoutes() {
+		return this.#ArticleSubCategoryRoutes;
+	}
+	
+	getArticleRoutes() {
+		return this.#ArticleRoutes;
+	}
+	
+	getComponentRoutes() {
+		return this.#ComponentRoutes;
+	}
+	
+	getNomenclatureRoutes() {
+		return this.#NomenclatureRoutes;
+	}
+	
+	getInventoryRoutes() {
+		return this.#InventoryRoutes;
+	}
+	
+	getWorkOrderRoutes() {
+		return this.#WorkOrderRoutes;
+	}
+	
+	getAssignationRoutes() {
+		return this.#AssignationRoutes;
+	}
+	
+	getArticleToChangeRoutes() {
+		return this.#ArticleToChangeRoutes;
+	}
+	
+	getInterventionRoutes() {
+		return this.#InterventionRoutes;
+	}
+	
+	getIntervenantRoutes() {
+		return this.#IntervenantRoutes;
+	}
+	
+	getChangedArticleRoutes() {
+		return this.#ChangedArticleRoutes;
+	}
+	
+	getSupplierRoutes() {
+		return this.#SupplierRoutes;
+	}
+	
+	getCatalogRoutes() {
+		return this.#CatalogRoutes;
+	}
+	
+	getOrderRoutes() {
+		return this.#OrderRoutes;
+	}
+	
+	getOrderLineRoutes() {
+		return this.#OrderLineRoutes;
 	}
 	
 	getSelectorRoutes() {

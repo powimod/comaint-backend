@@ -193,6 +193,226 @@ class CompanyModel {
 		if (result.length === 0) 
 			return null;
 		childrenCounterList['Unit'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM sections
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Section'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM equipment_families
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['EquipmentFamily'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM equipment_types
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['EquipmentType'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM equipments
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Equipment'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM article_categories
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['ArticleCategory'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM article_subcategories
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['ArticleSubCategory'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM articles
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Article'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM components
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Component'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM nomenclatures
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Nomenclature'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM inventories
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Inventory'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM work_orders
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['WorkOrder'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM assignation
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Assignation'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM articles_to_change
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['ArticleToChange'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM interventions
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Intervention'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM intervenant
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Intervenant'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM changed_articles
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['ChangedArticle'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM suppliers
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Supplier'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM catalog
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Catalog'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM orders
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Order'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM order_lines
+			WHERE id_company = ?
+			`
+		result = await db.query(sql, [ companyId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['OrderLine'] = result[0].counter
 
 		return childrenCounterList;
 	}
@@ -342,6 +562,286 @@ class CompanyModel {
 			throw new Error(result.code)
 		return result[0].count 
 	}
+
+	static async getSectionCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM sections
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getEquipmentFamilyCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM equipment_families
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getEquipmentTypeCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM equipment_types
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getEquipmentCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM equipments
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getArticleCategoryCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM article_categories
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getArticleSubCategoryCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM article_subcategories
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getArticleCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM articles
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getComponentCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM components
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getNomenclatureCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM nomenclatures
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getInventoryCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM inventories
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getWorkOrderCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM work_orders
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getAssignationCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM assignation
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getArticleToChangeCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM articles_to_change
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getInterventionCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM interventions
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getIntervenantCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM intervenant
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getChangedArticleCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM changed_articles
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getSupplierCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM suppliers
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getCatalogCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM catalog
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getOrderCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM orders
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getOrderLineCount(companyId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM order_lines
+			WHERE id_company = ?
+			`
+		const result = await db.query(sql, [companyId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
 	
 
 	static async hasChildren(companyId) {
@@ -352,6 +852,46 @@ class CompanyModel {
 		if (await this.getUserCount(companyId) > 0) 
 			return true
 		if (await this.getUnitCount(companyId) > 0) 
+			return true
+		if (await this.getSectionCount(companyId) > 0) 
+			return true
+		if (await this.getEquipmentFamilyCount(companyId) > 0) 
+			return true
+		if (await this.getEquipmentTypeCount(companyId) > 0) 
+			return true
+		if (await this.getEquipmentCount(companyId) > 0) 
+			return true
+		if (await this.getArticleCategoryCount(companyId) > 0) 
+			return true
+		if (await this.getArticleSubCategoryCount(companyId) > 0) 
+			return true
+		if (await this.getArticleCount(companyId) > 0) 
+			return true
+		if (await this.getComponentCount(companyId) > 0) 
+			return true
+		if (await this.getNomenclatureCount(companyId) > 0) 
+			return true
+		if (await this.getInventoryCount(companyId) > 0) 
+			return true
+		if (await this.getWorkOrderCount(companyId) > 0) 
+			return true
+		if (await this.getAssignationCount(companyId) > 0) 
+			return true
+		if (await this.getArticleToChangeCount(companyId) > 0) 
+			return true
+		if (await this.getInterventionCount(companyId) > 0) 
+			return true
+		if (await this.getIntervenantCount(companyId) > 0) 
+			return true
+		if (await this.getChangedArticleCount(companyId) > 0) 
+			return true
+		if (await this.getSupplierCount(companyId) > 0) 
+			return true
+		if (await this.getCatalogCount(companyId) > 0) 
+			return true
+		if (await this.getOrderCount(companyId) > 0) 
+			return true
+		if (await this.getOrderLineCount(companyId) > 0) 
 			return true
 		return false
 	}

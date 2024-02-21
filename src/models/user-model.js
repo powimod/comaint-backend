@@ -164,6 +164,39 @@ class UserModel {
 		if (result.length === 0) 
 			return null;
 		childrenCounterList['Token'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM inventories
+			WHERE id_user = ?
+			`
+		result = await db.query(sql, [ userId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Inventory'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM assignation
+			WHERE id_user = ?
+			`
+		result = await db.query(sql, [ userId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Assignation'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM intervenant
+			WHERE id_user = ?
+			`
+		result = await db.query(sql, [ userId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['Intervenant'] = result[0].counter
 
 		return childrenCounterList;
 	}
@@ -276,10 +309,58 @@ class UserModel {
 			throw new Error(result.code)
 		return result[0].count 
 	}
+
+	static async getInventoryCount(userId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM inventories
+			WHERE id_user = ?
+			`
+		const result = await db.query(sql, [userId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getAssignationCount(userId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM assignation
+			WHERE id_user = ?
+			`
+		const result = await db.query(sql, [userId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getIntervenantCount(userId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM intervenant
+			WHERE id_user = ?
+			`
+		const result = await db.query(sql, [userId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
 	
 
 	static async hasChildren(userId) {
 		if (await this.getTokenCount(userId) > 0) 
+			return true
+		if (await this.getInventoryCount(userId) > 0) 
+			return true
+		if (await this.getAssignationCount(userId) > 0) 
+			return true
+		if (await this.getIntervenantCount(userId) > 0) 
 			return true
 		return false
 	}

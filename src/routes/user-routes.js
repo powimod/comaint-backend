@@ -107,16 +107,17 @@ module.exports = (app, UserModel, View) => {
 
 	app.post('/api/v1/user/create', withAuth, async (request, response) => {
 		try {
-			const companyId = request.companyId
-			assert(companyId !== undefined)
-			assert(companyId !== null)
-
 			const user = request.body.user;
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`);
-
-			user.companyId = companyId
-
+			// control root property 
+			if (user.companyId === undefined) {
+				user.companyId = request.companyId;
+			}
+			else {
+				if (user.companyId !== request.companyId)
+					throw new Error('Unauthorized access');
+			}
 			let newUser = await UserModel.createUser(user, request.t);
 			if (newUser.id === undefined)
 				throw new Error(`Can't find ID of newly created User`);
@@ -134,6 +135,14 @@ module.exports = (app, UserModel, View) => {
 			const user = request.body.user
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`)
+			// control root property 
+			if (user.companyId === undefined) {
+				user.companyId = request.companyId;
+			}
+			else {
+				if (user.companyId !== request.companyId)
+					throw new Error('Unauthorized access');
+			}
 			let editedUser = await UserModel.editUser(user, request.t)
 			if (editedUser.id !== user.id)
 				throw new Error(`Edited User ID does not match`)
