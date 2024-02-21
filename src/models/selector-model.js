@@ -250,25 +250,26 @@ class SelectorModel {
 			}
 		}
 
-		const recursivelyBuildParentFilters = (elementResult, level=0) => {
+		const recursivelyBuildParentFilters = (elementResult) => {
 			assert(typeof(elementResult) == 'object')
-			console.log(`- level ${level} - Search parent of ${elementResult.name}`)
 			const element = this.#elementList[elementResult.name]
 			assert(element !== undefined)
+			const filters = []
 			if (elementResult.id !== undefined) {
-				console.log("	- immediat ", elementResult.name, "=", elementResult.id )
-				//return [ { elementResult.name : elementResult.id } ]
-				return
+				const name =  elementResult.name
+				const id =  elementResult.id 
+				filters.push( { name : id } )
 			}
-			const parentFilters = []
-			for (const parentElement of element.parents) {
-				console.log("	- parent", parentElement.name)
-				const parentElementResult = resultList[parentElement.name]
-				assert(parentElementResult !== undefined)
-				const parentFilters = recursivelyBuildParentFilters(parentElementResult, level+1)
-
+			else {
+				for (const parentElement of element.parents) {
+					const parentElementResult = resultList[parentElement.name]
+					assert(parentElementResult !== undefined)
+					const parentFilters = recursivelyBuildParentFilters(parentElementResult)
+					for (const filter of parentFilters)
+						filters.push(filter)
+				}
 			}
-			return parentFilters 
+			return filters 
 		}
 
 		// for each floor from lowest to highest 
