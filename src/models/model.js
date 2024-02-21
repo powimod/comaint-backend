@@ -31,6 +31,7 @@ class Model {
 	#TokenModel = null;
 	#UnitModel = null;
 	
+	#SelectorModel = null;
 
 	get db() {
 		return this.#db;
@@ -115,6 +116,7 @@ class Model {
 		this.#TokenModel = require('./token-model.js')(this.#config);
 		this.#UnitModel = require('./unit-model.js')(this.#config);
 		
+		this.#SelectorModel = require('./selector-model.js')(this.#config);
 	}
 
 	getAuthModel() {
@@ -146,6 +148,9 @@ class Model {
 		return this.#UnitModel;
 	}
 	
+	getSelectorModel() {
+		return this.#SelectorModel;
+	}
 }
 
 class ModelSingleton {
