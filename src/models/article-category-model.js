@@ -1,7 +1,7 @@
 /* Comaint API backend (API server of Comaint project)
  * Copyright (C) 2023-2024 Dominique Parisot
  *
- * unit-model.js
+ * article-category-model.js
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the 
  * GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or
@@ -17,10 +17,10 @@
 'use strict'
 const assert = require('assert');
 
-const { unitObjectDef } = require('../objects/unit-object-def.cjs')
+const { articleCategoryObjectDef } = require('../objects/article-category-object-def.cjs')
 const objectUtils = require('../objects/object-util.cjs')
 
-class UnitModel {
+class ArticleCategoryModel {
 	static #model = null;
 
 	static initialize = () => {
@@ -30,16 +30,16 @@ class UnitModel {
 		assert(this.#model !== null)
 	}
 
-	static async getUnitIdList(filters) {
+	static async getArticleCategoryIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(articleCategoryObjectDef, filters)
 		const whereClause = fieldNames.length === 0 ? '' :
 			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
  
-		let sql = `SELECT id FROM units ${whereClause}`
+		let sql = `SELECT id FROM article_categories ${whereClause}`
 		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
@@ -49,16 +49,16 @@ class UnitModel {
 		return idList;
 	}
 
-	static async findUnitCount(filters = []) {
+	static async findArticleCategoryCount(filters = []) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(articleCategoryObjectDef, filters)
 		const whereClause = fieldNames.length === 0 ? '' :
 			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
-		let sql = `SELECT COUNT(id) as counter FROM units ${whereClause}`
+		let sql = `SELECT COUNT(id) as counter FROM article_categories ${whereClause}`
 		const result = await db.query(sql, fieldValues)
 		if (result.code)
 			throw new Error(result.code)
@@ -66,13 +66,13 @@ class UnitModel {
 	}
 
 
-	static async findUnitList(filters, params) {
+	static async findArticleCategoryList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(articleCategoryObjectDef, filters)
 		const whereClause = fieldNames.length === 0 ? '' :
 			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
@@ -92,42 +92,42 @@ class UnitModel {
 		if (offset < 0) offset = 0;
 		fieldValues.push(offset);
 
-		let sql = `SELECT * FROM units ${whereClause} LIMIT ? OFFSET ?`;
+		let sql = `SELECT * FROM article_categories ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
 
 		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
-		const unitList = [];
-		for (let unitRecord of result) 
-			unitList.push( objectUtils.convertObjectFromDb(unitObjectDef, unitRecord, /*filter=*/true) )
-		return unitList;
+		const articleCategoryList = [];
+		for (let articleCategoryRecord of result) 
+			articleCategoryList.push( objectUtils.convertObjectFromDb(articleCategoryObjectDef, articleCategoryRecord, /*filter=*/true) )
+		return articleCategoryList;
 	}
 
-	static async getUnitById(unitId) {
+	static async getArticleCategoryById(articleCategoryId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (unitId === undefined)
-			throw new Error('Argument <unitId> required');
-		if (isNaN(unitId) === undefined)
-			throw new Error('Argument <unitId> is not a number');
-		let sql = `SELECT * FROM units WHERE id = ?`;
-		const result = await db.query(sql, [unitId]);
+		if (articleCategoryId === undefined)
+			throw new Error('Argument <articleCategoryId> required');
+		if (isNaN(articleCategoryId) === undefined)
+			throw new Error('Argument <articleCategoryId> is not a number');
+		let sql = `SELECT * FROM article_categories WHERE id = ?`;
+		const result = await db.query(sql, [articleCategoryId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const unit = objectUtils.convertObjectFromDb(unitObjectDef, result[0], /*filter=*/false)
-		return unit;
+		const articleCategory = objectUtils.convertObjectFromDb(articleCategoryObjectDef, result[0], /*filter=*/false)
+		return articleCategory;
 	}
 	
 
 
-	static async getChildrenCountList(unitId) {
-		if (unitId === undefined)
-			throw new Error('Argument <unitId> required');
-		if (isNaN(unitId) === undefined)
-			throw new Error('Argument <unitId> is not a number');
+	static async getChildrenCountList(articleCategoryId) {
+		if (articleCategoryId === undefined)
+			throw new Error('Argument <articleCategoryId> required');
+		if (isNaN(articleCategoryId) === undefined)
+			throw new Error('Argument <articleCategoryId> is not a number');
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		let sql, result;
@@ -136,34 +136,34 @@ class UnitModel {
 		
 		sql = `
 			SELECT COUNT(id) AS counter 
-			FROM sections
-			WHERE id_unit = ?
+			FROM article_subcategories
+			WHERE id_article_category = ?
 			`
-		result = await db.query(sql, [ unitId ]);
+		result = await db.query(sql, [ articleCategoryId ]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		childrenCounterList['Section'] = result[0].counter
+		childrenCounterList['ArticleSubCategory'] = result[0].counter
 
 		return childrenCounterList;
 	}
 
 
-	static async createUnit(unit, i18n_t = null) {
+	static async createArticleCategory(articleCategory, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = objectUtils.controlObject(unitObjectDef, unit, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
+		const error = objectUtils.controlObject(articleCategoryObjectDef, articleCategory, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const unitDb = objectUtils.convertObjectToDb(unitObjectDef, unit)
+		const articleCategoryDb = objectUtils.convertObjectToDb(articleCategoryObjectDef, articleCategory)
 
 		const fieldNames = []
 		const markArray = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(unitDb)) {
+		for (let [propName, propValue] of Object.entries(articleCategoryDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(propName)
@@ -172,30 +172,30 @@ class UnitModel {
 		}
 
 		const sqlRequest = `
-			INSERT INTO units(${fieldNames.join(', ')}) 
+			INSERT INTO article_categories(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
-		const unitId = result.insertId;
-		unit = this.getUnitById(unitId)
-		return unit;
+		const articleCategoryId = result.insertId;
+		articleCategory = this.getArticleCategoryById(articleCategoryId)
+		return articleCategory;
 	}
 
-	static async editUnit(unit, i18n_t = null) {
+	static async editArticleCategory(articleCategory, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = objectUtils.controlObject(unitObjectDef, unit, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
+		const error = objectUtils.controlObject(articleCategoryObjectDef, articleCategory, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const unitDb = objectUtils.convertObjectToDb(unitObjectDef, unit)
+		const articleCategoryDb = objectUtils.convertObjectToDb(articleCategoryObjectDef, articleCategory)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(unitDb)) {
+		for (let [propName, propValue] of Object.entries(articleCategoryDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)
@@ -203,65 +203,66 @@ class UnitModel {
 		}
 
 		const sqlRequest = `
-			UPDATE units
+			UPDATE article_categories
 				SET ${fieldNames.join(', ')}
 			WHERE id = ?
 		`
-		sqlParams.push(unit.id) // WHERE clause
+		sqlParams.push(articleCategory.id) // WHERE clause
 
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
-		const unitId = unit.id
-		unit = this.getUnitById(unitId)
-		return unit;
+		const articleCategoryId = articleCategory.id
+		articleCategory = this.getArticleCategoryById(articleCategoryId)
+		return articleCategory;
 	}
 
 	
-	static async deleteById(unitId, recursive = false) {
+	static async deleteById(articleCategoryId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (unitId === undefined)
-			throw new Error('Argument <unitId> required');
-		if (isNaN(unitId) === undefined)
-			throw new Error('Argument <unitId> is not a number');
+		if (articleCategoryId === undefined)
+			throw new Error('Argument <articleCategoryId> required');
+		if (isNaN(articleCategoryId) === undefined)
+			throw new Error('Argument <articleCategoryId> is not a number');
 
 		if (! recursive) {
-		       	if (await this.hasChildren(unitId))
-				throw new Error(`Can not delete Unit ID <${ unitId }> because it has children`);
+		       	if (await this.hasChildren(articleCategoryId))
+				throw new Error(`Can not delete ArticleCategory ID <${ articleCategoryId }> because it has children`);
 		}
 		// children will be removed since Database constraint has "ON DELETE CASCADE" 
-		let sql = `DELETE FROM units WHERE id = ?`;
-		const result = await db.query(sql, [unitId]);
+		let sql = `DELETE FROM article_categories WHERE id = ?`;
+		const result = await db.query(sql, [articleCategoryId]);
 		if (result.code) 
 			throw new Error(result.code);
 		return (result.affectedRows !== 0) 
 	}
 
-	static async getSectionCount(unitId) {
+	
+	static async getArticleSubCategoryCount(articleCategoryId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		const sql = `
 			SELECT COUNT(id) as count
-			FROM sections
-			WHERE id_unit = ?
+			FROM article_subcategories
+			WHERE id_category = ?
 			`
-		const result = await db.query(sql, [unitId])
+		const result = await db.query(sql, [articleCategoryId])
 		if (result.code) 
 			throw new Error(result.code)
 		return result[0].count 
 	}
 	
 
-	static async hasChildren(unitId) {
-		if (await this.getSectionCount(unitId) > 0) 
+	static async hasChildren(articleCategoryId) {
+		if (await this.getArticleSubCategoryCount(articleCategoryId) > 0) 
 			return true
 		return false
 	}
 }
 
 module.exports = () => {
-	UnitModel.initialize();
-	return UnitModel;
+	ArticleCategoryModel.initialize();
+	return ArticleCategoryModel;
 }
 

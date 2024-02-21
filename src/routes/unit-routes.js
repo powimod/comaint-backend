@@ -104,6 +104,14 @@ module.exports = (app, UnitModel, View) => {
 			const unit = request.body.unit;
 			if (unit === undefined)
 				throw new Error(`Can't find <unit> object in request body`);
+			// control root property 
+			if (unit.companyId === undefined) {
+				unit.companyId = request.companyId;
+			}
+			else {
+				if (unit.companyId !== request.companyId)
+					throw new Error('Unauthorized access');
+			}
 			let newUnit = await UnitModel.createUnit(unit, request.t);
 			if (newUnit.id === undefined)
 				throw new Error(`Can't find ID of newly created Unit`);
@@ -119,6 +127,14 @@ module.exports = (app, UnitModel, View) => {
 			const unit = request.body.unit
 			if (unit === undefined)
 				throw new Error(`Can't find <unit> object in request body`)
+			// control root property 
+			if (unit.companyId === undefined) {
+				unit.companyId = request.companyId;
+			}
+			else {
+				if (unit.companyId !== request.companyId)
+					throw new Error('Unauthorized access');
+			}
 			let editedUnit = await UnitModel.editUnit(unit, request.t)
 			if (editedUnit.id !== unit.id)
 				throw new Error(`Edited Unit ID does not match`)

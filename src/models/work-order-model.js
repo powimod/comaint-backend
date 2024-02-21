@@ -1,7 +1,7 @@
 /* Comaint API backend (API server of Comaint project)
  * Copyright (C) 2023-2024 Dominique Parisot
  *
- * unit-model.js
+ * work-order-model.js
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the 
  * GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or
@@ -17,10 +17,10 @@
 'use strict'
 const assert = require('assert');
 
-const { unitObjectDef } = require('../objects/unit-object-def.cjs')
+const { workOrderObjectDef } = require('../objects/work-order-object-def.cjs')
 const objectUtils = require('../objects/object-util.cjs')
 
-class UnitModel {
+class WorkOrderModel {
 	static #model = null;
 
 	static initialize = () => {
@@ -30,16 +30,16 @@ class UnitModel {
 		assert(this.#model !== null)
 	}
 
-	static async getUnitIdList(filters) {
+	static async getWorkOrderIdList(filters) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(workOrderObjectDef, filters)
 		const whereClause = fieldNames.length === 0 ? '' :
 			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
  
-		let sql = `SELECT id FROM units ${whereClause}`
+		let sql = `SELECT id FROM work_orders ${whereClause}`
 		const result = await db.query(sql, fieldValues)
 		if (result.code) 
 			throw new Error(result.code)
@@ -49,16 +49,16 @@ class UnitModel {
 		return idList;
 	}
 
-	static async findUnitCount(filters = []) {
+	static async findWorkOrderCount(filters = []) {
 		assert(filters !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(workOrderObjectDef, filters)
 		const whereClause = fieldNames.length === 0 ? '' :
 			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
-		let sql = `SELECT COUNT(id) as counter FROM units ${whereClause}`
+		let sql = `SELECT COUNT(id) as counter FROM work_orders ${whereClause}`
 		const result = await db.query(sql, fieldValues)
 		if (result.code)
 			throw new Error(result.code)
@@ -66,13 +66,13 @@ class UnitModel {
 	}
 
 
-	static async findUnitList(filters, params) {
+	static async findWorkOrderList(filters, params) {
 		assert(filters !== undefined);
 		assert(params !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(unitObjectDef, filters)
+		const [ fieldNames, fieldValues ] = objectUtils.buildFieldArrays(workOrderObjectDef, filters)
 		const whereClause = fieldNames.length === 0 ? '' :
 			'WHERE ' + fieldNames.map(f => `${f} = ?`).join(' AND ')
 
@@ -92,42 +92,42 @@ class UnitModel {
 		if (offset < 0) offset = 0;
 		fieldValues.push(offset);
 
-		let sql = `SELECT * FROM units ${whereClause} LIMIT ? OFFSET ?`;
+		let sql = `SELECT * FROM work_orders ${whereClause} LIMIT ? OFFSET ?`;
 		// TODO select with column names and not jocker
 
 		const result = await db.query(sql, fieldValues);
 		if (result.code) 
 			throw new Error(result.code);
-		const unitList = [];
-		for (let unitRecord of result) 
-			unitList.push( objectUtils.convertObjectFromDb(unitObjectDef, unitRecord, /*filter=*/true) )
-		return unitList;
+		const workOrderList = [];
+		for (let workOrderRecord of result) 
+			workOrderList.push( objectUtils.convertObjectFromDb(workOrderObjectDef, workOrderRecord, /*filter=*/true) )
+		return workOrderList;
 	}
 
-	static async getUnitById(unitId) {
+	static async getWorkOrderById(workOrderId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (unitId === undefined)
-			throw new Error('Argument <unitId> required');
-		if (isNaN(unitId) === undefined)
-			throw new Error('Argument <unitId> is not a number');
-		let sql = `SELECT * FROM units WHERE id = ?`;
-		const result = await db.query(sql, [unitId]);
+		if (workOrderId === undefined)
+			throw new Error('Argument <workOrderId> required');
+		if (isNaN(workOrderId) === undefined)
+			throw new Error('Argument <workOrderId> is not a number');
+		let sql = `SELECT * FROM work_orders WHERE id = ?`;
+		const result = await db.query(sql, [workOrderId]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		const unit = objectUtils.convertObjectFromDb(unitObjectDef, result[0], /*filter=*/false)
-		return unit;
+		const workOrder = objectUtils.convertObjectFromDb(workOrderObjectDef, result[0], /*filter=*/false)
+		return workOrder;
 	}
 	
 
 
-	static async getChildrenCountList(unitId) {
-		if (unitId === undefined)
-			throw new Error('Argument <unitId> required');
-		if (isNaN(unitId) === undefined)
-			throw new Error('Argument <unitId> is not a number');
+	static async getChildrenCountList(workOrderId) {
+		if (workOrderId === undefined)
+			throw new Error('Argument <workOrderId> required');
+		if (isNaN(workOrderId) === undefined)
+			throw new Error('Argument <workOrderId> is not a number');
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		let sql, result;
@@ -136,34 +136,45 @@ class UnitModel {
 		
 		sql = `
 			SELECT COUNT(id) AS counter 
-			FROM sections
-			WHERE id_unit = ?
+			FROM assignation
+			WHERE id_work_order = ?
 			`
-		result = await db.query(sql, [ unitId ]);
+		result = await db.query(sql, [ workOrderId ]);
 		if (result.code) 
 			throw new Error(result.code);
 		if (result.length === 0) 
 			return null;
-		childrenCounterList['Section'] = result[0].counter
+		childrenCounterList['Assignation'] = result[0].counter
+		sql = `
+			SELECT COUNT(id) AS counter 
+			FROM articles_to_change
+			WHERE id_work_order = ?
+			`
+		result = await db.query(sql, [ workOrderId ]);
+		if (result.code) 
+			throw new Error(result.code);
+		if (result.length === 0) 
+			return null;
+		childrenCounterList['ArticleToChange'] = result[0].counter
 
 		return childrenCounterList;
 	}
 
 
-	static async createUnit(unit, i18n_t = null) {
+	static async createWorkOrder(workOrder, i18n_t = null) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		const error = objectUtils.controlObject(unitObjectDef, unit, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
+		const error = objectUtils.controlObject(workOrderObjectDef, workOrder, /*fullCheck=*/true, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const unitDb = objectUtils.convertObjectToDb(unitObjectDef, unit)
+		const workOrderDb = objectUtils.convertObjectToDb(workOrderObjectDef, workOrder)
 
 		const fieldNames = []
 		const markArray = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(unitDb)) {
+		for (let [propName, propValue] of Object.entries(workOrderDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(propName)
@@ -172,30 +183,30 @@ class UnitModel {
 		}
 
 		const sqlRequest = `
-			INSERT INTO units(${fieldNames.join(', ')}) 
+			INSERT INTO work_orders(${fieldNames.join(', ')}) 
 			       VALUES (${markArray.join(', ')});
 		`;
 		
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
-		const unitId = result.insertId;
-		unit = this.getUnitById(unitId)
-		return unit;
+		const workOrderId = result.insertId;
+		workOrder = this.getWorkOrderById(workOrderId)
+		return workOrder;
 	}
 
-	static async editUnit(unit, i18n_t = null) {
+	static async editWorkOrder(workOrder, i18n_t = null) {
 		assert(this.#model !== null)
 		const db = this.#model.db
 
-		const error = objectUtils.controlObject(unitObjectDef, unit, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
+		const error = objectUtils.controlObject(workOrderObjectDef, workOrder, /*fullCheck=*/false, /*checkId=*/false, i18n_t)
 		if ( error)
 			throw new Error(error)
 
-		const unitDb = objectUtils.convertObjectToDb(unitObjectDef, unit)
+		const workOrderDb = objectUtils.convertObjectToDb(workOrderObjectDef, workOrder)
 		const fieldNames = []
 		const sqlParams = []
-		for (let [propName, propValue] of Object.entries(unitDb)) {
+		for (let [propName, propValue] of Object.entries(workOrderDb)) {
 			if (propValue === undefined)
 				continue
 			fieldNames.push(`${propName} = ?`)
@@ -203,65 +214,82 @@ class UnitModel {
 		}
 
 		const sqlRequest = `
-			UPDATE units
+			UPDATE work_orders
 				SET ${fieldNames.join(', ')}
 			WHERE id = ?
 		`
-		sqlParams.push(unit.id) // WHERE clause
+		sqlParams.push(workOrder.id) // WHERE clause
 
 		const result = await db.query(sqlRequest, sqlParams);
 		if (result.code)
 			throw new Error(result.code);
-		const unitId = unit.id
-		unit = this.getUnitById(unitId)
-		return unit;
+		const workOrderId = workOrder.id
+		workOrder = this.getWorkOrderById(workOrderId)
+		return workOrder;
 	}
 
 	
-	static async deleteById(unitId, recursive = false) {
+	static async deleteById(workOrderId, recursive = false) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
-		if (unitId === undefined)
-			throw new Error('Argument <unitId> required');
-		if (isNaN(unitId) === undefined)
-			throw new Error('Argument <unitId> is not a number');
+		if (workOrderId === undefined)
+			throw new Error('Argument <workOrderId> required');
+		if (isNaN(workOrderId) === undefined)
+			throw new Error('Argument <workOrderId> is not a number');
 
 		if (! recursive) {
-		       	if (await this.hasChildren(unitId))
-				throw new Error(`Can not delete Unit ID <${ unitId }> because it has children`);
+		       	if (await this.hasChildren(workOrderId))
+				throw new Error(`Can not delete WorkOrder ID <${ workOrderId }> because it has children`);
 		}
 		// children will be removed since Database constraint has "ON DELETE CASCADE" 
-		let sql = `DELETE FROM units WHERE id = ?`;
-		const result = await db.query(sql, [unitId]);
+		let sql = `DELETE FROM work_orders WHERE id = ?`;
+		const result = await db.query(sql, [workOrderId]);
 		if (result.code) 
 			throw new Error(result.code);
 		return (result.affectedRows !== 0) 
 	}
 
-	static async getSectionCount(unitId) {
+	
+	static async getAssignationCount(workOrderId) {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 		const sql = `
 			SELECT COUNT(id) as count
-			FROM sections
-			WHERE id_unit = ?
+			FROM assignation
+			WHERE id_workOrder = ?
 			`
-		const result = await db.query(sql, [unitId])
+		const result = await db.query(sql, [workOrderId])
+		if (result.code) 
+			throw new Error(result.code)
+		return result[0].count 
+	}
+	
+	static async getArticleToChangeCount(workOrderId) {
+		assert(this.#model !== null);
+		const db = this.#model.db;
+		const sql = `
+			SELECT COUNT(id) as count
+			FROM articles_to_change
+			WHERE id_workOrder = ?
+			`
+		const result = await db.query(sql, [workOrderId])
 		if (result.code) 
 			throw new Error(result.code)
 		return result[0].count 
 	}
 	
 
-	static async hasChildren(unitId) {
-		if (await this.getSectionCount(unitId) > 0) 
+	static async hasChildren(workOrderId) {
+		if (await this.getAssignationCount(workOrderId) > 0) 
+			return true
+		if (await this.getArticleToChangeCount(workOrderId) > 0) 
 			return true
 		return false
 	}
 }
 
 module.exports = () => {
-	UnitModel.initialize();
-	return UnitModel;
+	WorkOrderModel.initialize();
+	return WorkOrderModel;
 }
 

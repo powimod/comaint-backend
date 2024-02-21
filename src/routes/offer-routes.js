@@ -26,13 +26,6 @@ module.exports = (app, OfferModel, View) => {
 		const filters = {};
 		assert(request.companyId !== undefined);
 		try {
-			if (filters.companyId === undefined) {
-				filters.companyId = request.companyId;
-			}
-			else {
-				if (filters.companyId !== request.companyId)
-					throw new Error('Unauthorized access');
-			}
 			let resultsPerPage = request.query.resultsPerPage;
 			let offset = request.query.offset;
 			const params = {
@@ -60,6 +53,7 @@ module.exports = (app, OfferModel, View) => {
 			const offer = await OfferModel.getOfferById(offerId);
 			if (offer === null)
 				throw new Error(`Offer ID <${ offerId }> not found`);
+
 			// No root property to control
 			View.sendJsonResult(response, { offer });
 		}
@@ -95,6 +89,7 @@ module.exports = (app, OfferModel, View) => {
 			const offer = request.body.offer;
 			if (offer === undefined)
 				throw new Error(`Can't find <offer> object in request body`);
+			// No root property to control
 			let newOffer = await OfferModel.createOffer(offer, request.t);
 			if (newOffer.id === undefined)
 				throw new Error(`Can't find ID of newly created Offer`);
@@ -110,6 +105,8 @@ module.exports = (app, OfferModel, View) => {
 			const offer = request.body.offer
 			if (offer === undefined)
 				throw new Error(`Can't find <offer> object in request body`)
+
+			// No root property to control
 			let editedOffer = await OfferModel.editOffer(offer, request.t)
 			if (editedOffer.id !== offer.id)
 				throw new Error(`Edited Offer ID does not match`)
@@ -140,6 +137,7 @@ module.exports = (app, OfferModel, View) => {
 			const offer = await OfferModel.getOfferById(offerId);
 			if (offer === null)
 				throw new Error(`Offer ID <${ offerId }> not found`);
+
 			// No root property to control
 			const success = await OfferModel.deleteById(offerId, recursive);
 			View.sendJsonResult(response, {success});

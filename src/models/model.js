@@ -30,6 +30,26 @@ class Model {
 	#UserModel = null;
 	#TokenModel = null;
 	#UnitModel = null;
+	#SectionModel = null;
+	#EquipmentFamilyModel = null;
+	#EquipmentTypeModel = null;
+	#EquipmentModel = null;
+	#ArticleCategoryModel = null;
+	#ArticleSubCategoryModel = null;
+	#ArticleModel = null;
+	#ComponentModel = null;
+	#NomenclatureModel = null;
+	#InventoryModel = null;
+	#WorkOrderModel = null;
+	#AssignationModel = null;
+	#ArticleToChangeModel = null;
+	#InterventionModel = null;
+	#IntervenantModel = null;
+	#ChangedArticleModel = null;
+	#SupplierModel = null;
+	#CatalogModel = null;
+	#OrderModel = null;
+	#OrderLineModel = null;
 	
 	#SelectorModel = null;
 
@@ -115,6 +135,27 @@ class Model {
 		this.#UserModel = require('./user-model.js')(this.#config);
 		this.#TokenModel = require('./token-model.js')(this.#config);
 		this.#UnitModel = require('./unit-model.js')(this.#config);
+		this.#SectionModel = require('./section-model.js')(this.#config);
+		this.#EquipmentFamilyModel = require('./equipment-family-model.js')(this.#config);
+		this.#EquipmentTypeModel = require('./equipment-type-model.js')(this.#config);
+		this.#EquipmentModel = require('./equipment-model.js')(this.#config);
+		this.#ArticleCategoryModel = require('./article-category-model.js')(this.#config);
+		this.#ArticleSubCategoryModel = require('./article-sub-category-model.js')(this.#config);
+		this.#ArticleModel = require('./article-model.js')(this.#config);
+		this.#ComponentModel = require('./component-model.js')(this.#config);
+		this.#NomenclatureModel = require('./nomenclature-model.js')(this.#config);
+		this.#InventoryModel = require('./inventory-model.js')(this.#config);
+		this.#WorkOrderModel = require('./work-order-model.js')(this.#config);
+		this.#AssignationModel = require('./assignation-model.js')(this.#config);
+		this.#ArticleToChangeModel = require('./article-to-change-model.js')(this.#config);
+		this.#InterventionModel = require('./intervention-model.js')(this.#config);
+		this.#IntervenantModel = require('./intervenant-model.js')(this.#config);
+		this.#ChangedArticleModel = require('./changed-article-model.js')(this.#config);
+		this.#SupplierModel = require('./supplier-model.js')(this.#config);
+		this.#CatalogModel = require('./catalog-model.js')(this.#config);
+		this.#OrderModel = require('./order-model.js')(this.#config);
+		this.#OrderLineModel = require('./order-line-model.js')(this.#config);
+
 		
 		this.#SelectorModel = require('./selector-model.js')(this.#config);
 	}
@@ -148,6 +189,86 @@ class Model {
 		return this.#UnitModel;
 	}
 	
+	getSectionModel() {
+		return this.#SectionModel;
+	}
+	
+	getEquipmentFamilyModel() {
+		return this.#EquipmentFamilyModel;
+	}
+	
+	getEquipmentTypeModel() {
+		return this.#EquipmentTypeModel;
+	}
+	
+	getEquipmentModel() {
+		return this.#EquipmentModel;
+	}
+	
+	getArticleCategoryModel() {
+		return this.#ArticleCategoryModel;
+	}
+	
+	getArticleSubCategoryModel() {
+		return this.#ArticleSubCategoryModel;
+	}
+	
+	getArticleModel() {
+		return this.#ArticleModel;
+	}
+	
+	getComponentModel() {
+		return this.#ComponentModel;
+	}
+	
+	getNomenclatureModel() {
+		return this.#NomenclatureModel;
+	}
+	
+	getInventoryModel() {
+		return this.#InventoryModel;
+	}
+	
+	getWorkOrderModel() {
+		return this.#WorkOrderModel;
+	}
+	
+	getAssignationModel() {
+		return this.#AssignationModel;
+	}
+	
+	getArticleToChangeModel() {
+		return this.#ArticleToChangeModel;
+	}
+	
+	getInterventionModel() {
+		return this.#InterventionModel;
+	}
+	
+	getIntervenantModel() {
+		return this.#IntervenantModel;
+	}
+	
+	getChangedArticleModel() {
+		return this.#ChangedArticleModel;
+	}
+	
+	getSupplierModel() {
+		return this.#SupplierModel;
+	}
+	
+	getCatalogModel() {
+		return this.#CatalogModel;
+	}
+	
+	getOrderModel() {
+		return this.#OrderModel;
+	}
+	
+	getOrderLineModel() {
+		return this.#OrderLineModel;
+	}
+
 	getSelectorModel() {
 		return this.#SelectorModel;
 	}

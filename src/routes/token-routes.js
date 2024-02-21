@@ -33,13 +33,6 @@ module.exports = (app, TokenModel, View) => {
 		}
 		assert(request.companyId !== undefined);
 		try {
-			if (filters.companyId === undefined) {
-				filters.companyId = request.companyId;
-			}
-			else {
-				if (filters.companyId !== request.companyId)
-					throw new Error('Unauthorized access');
-			}
 			let resultsPerPage = request.query.resultsPerPage;
 			let offset = request.query.offset;
 			const params = {
@@ -67,6 +60,7 @@ module.exports = (app, TokenModel, View) => {
 			const token = await TokenModel.getTokenById(tokenId);
 			if (token === null)
 				throw new Error(`Token ID <${ tokenId }> not found`);
+
 			// No root property to control
 			View.sendJsonResult(response, { token });
 		}
@@ -102,6 +96,7 @@ module.exports = (app, TokenModel, View) => {
 			const token = request.body.token;
 			if (token === undefined)
 				throw new Error(`Can't find <token> object in request body`);
+			// No root property to control
 			let newToken = await TokenModel.createToken(token, request.t);
 			if (newToken.id === undefined)
 				throw new Error(`Can't find ID of newly created Token`);
@@ -117,6 +112,8 @@ module.exports = (app, TokenModel, View) => {
 			const token = request.body.token
 			if (token === undefined)
 				throw new Error(`Can't find <token> object in request body`)
+
+			// No root property to control
 			let editedToken = await TokenModel.editToken(token, request.t)
 			if (editedToken.id !== token.id)
 				throw new Error(`Edited Token ID does not match`)
@@ -147,6 +144,7 @@ module.exports = (app, TokenModel, View) => {
 			const token = await TokenModel.getTokenById(tokenId);
 			if (token === null)
 				throw new Error(`Token ID <${ tokenId }> not found`);
+
 			// No root property to control
 			const success = await TokenModel.deleteById(tokenId, recursive);
 			View.sendJsonResult(response, {success});

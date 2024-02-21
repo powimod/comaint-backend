@@ -111,6 +111,14 @@ module.exports = (app, SubscriptionModel, View) => {
 			const subscription = request.body.subscription;
 			if (subscription === undefined)
 				throw new Error(`Can't find <subscription> object in request body`);
+			// control root property 
+			if (subscription.companyId === undefined) {
+				subscription.companyId = request.companyId;
+			}
+			else {
+				if (subscription.companyId !== request.companyId)
+					throw new Error('Unauthorized access');
+			}
 			let newSubscription = await SubscriptionModel.createSubscription(subscription, request.t);
 			if (newSubscription.id === undefined)
 				throw new Error(`Can't find ID of newly created Subscription`);
@@ -126,6 +134,14 @@ module.exports = (app, SubscriptionModel, View) => {
 			const subscription = request.body.subscription
 			if (subscription === undefined)
 				throw new Error(`Can't find <subscription> object in request body`)
+			// control root property 
+			if (subscription.companyId === undefined) {
+				subscription.companyId = request.companyId;
+			}
+			else {
+				if (subscription.companyId !== request.companyId)
+					throw new Error('Unauthorized access');
+			}
 			let editedSubscription = await SubscriptionModel.editSubscription(subscription, request.t)
 			if (editedSubscription.id !== subscription.id)
 				throw new Error(`Edited Subscription ID does not match`)
