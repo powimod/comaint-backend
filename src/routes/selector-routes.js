@@ -22,19 +22,18 @@ const {withAuth} = require('./auth-routes')
 
 module.exports = (app, SelectorModel, View) => {
 
-	app.get('/api/v1/selector/request', /* TODO enable withAuth,*/ async (request, response) => {
-		const filters = {}
-		// TODO enable : assert(request.companyId !== undefined)
+	app.post('/api/v1/selector/request', /* TODO enable withAuth,*/ async (request, response) => {
+		const selectors = request.body.article
+		if (selectors === undefined)
+			throw new Error(`Can't find <selectors> object in request body`)
 		try {
-			/* TODO enable
-			if (filters.companyId === undefined) {
-				filters.companyId = request.companyId
+			if (selectors.companyId === undefined) {
+				selectors.companyId = request.companyId
 			}
 			else {
-				if (filters.companyId !== request.companyId)
+				if (selectors.companyId !== request.companyId)
 					throw new Error('Unauthorized access')
 			}
-			*/
 			const results = await SelectorModel.query(filters)
 			View.sendJsonResult(response, { results })
 		}
