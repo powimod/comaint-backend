@@ -28,11 +28,15 @@ class SelectorModel {
 	}
 
 	static parcFamilyCount = (parentFilters) => {
-		console.log('dOm filters', parentFilters)
+		console.log('dOm parc Family filters ', parentFilters)
 		return 222;
 	}
 
 	static #elementList = {
+		'company': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.parcFamilyCount
+		},
 		'parc-family': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.parcFamilyCount
@@ -88,21 +92,25 @@ class SelectorModel {
 	}
 
 	static #linkArray = [
-		{ source: 'parc-type',    target: 'parc-family' },
-		{ source: 'parc-equipment',         target: 'parc-type' },
-		{ source: 'parc-section', target: 'parc-unit' },
-		{ source: 'parc-equipment',         target: 'parc-section' },
+		{ source: 'parc-family',       target: 'company' },
+		{ source: 'parc-type',         target: 'parc-family' },
+		{ source: 'parc-equipment',    target: 'parc-type' },
+		{ source: 'parc-unit',         target: 'company' },
+		{ source: 'parc-section',      target: 'parc-unit' },
+		{ source: 'parc-equipment',    target: 'parc-section' },
 
 		{ source: 'workorder',         target: 'parc-equipment' },
 		{ source: 'intervention',      target: 'parc-equipment' },
 
+		{ source: 'stock-category' ,   target: 'company' },
 		{ source: 'stock-subcategory', target: 'stock-category' },
-		{ source: 'stock-article',             target: 'stock-subcategory' },
+		{ source: 'stock-article',     target: 'stock-subcategory' },
+		{ source: 'stock-unit',        target: 'company' },
 		{ source: 'stock-section',     target: 'stock-unit' },
-		{ source: 'stock-article',             target: 'stock-section' },
+		{ source: 'stock-article',     target: 'stock-section' },
 
-		{ source: 'nomenclature',     target: 'stock-article' },
-		{ source: 'nomenclature',     target: 'parc-equipment' },
+		{ source: 'nomenclature',       target: 'stock-article' },
+		{ source: 'nomenclature',       target: 'parc-equipment' },
 	]
 	static #elementArray = []
 	static #floorArray = []
@@ -198,7 +206,6 @@ class SelectorModel {
 		assert(this.#model !== null);
 		const db = this.#model.db;
 
-		console.log("dOm selectors: ", selectors)
 
 		// initialize result array
 		const resultList = {}
@@ -207,16 +214,15 @@ class SelectorModel {
 				name: element.name,
 				type: null // unknown
 			}
-			const elementFilterValue = selectors[element.name]
-			if (elementFilterValue !== undefined) {
-				if (isNaN(elementFilterValue))
+			const selectorId = selectors[`${element.name}Id`]
+			if ( selectorId !== undefined) {
+				if (isNaN(selectorId))
 					throw new Error(`Filter ${element.name} value is not a number`)
 				result.type = 'selector'
-				result.id = parseInt(elementFilterValue)
+				result.id = parseInt(selectorId)
 			}
 			resultList[element.name] = result
 		}
-
 
 		//===== find element ID from children known element ID
 		// for each floor from highest to lowest
@@ -250,28 +256,38 @@ class SelectorModel {
 			}
 		}
 
-		const recursivelyBuildParentFilters = (elementResult) => {
-			assert(typeof(elementResult) == 'object')
-			const element = this.#elementList[elementResult.name]
-			assert(element !== undefined)
-			const filters = []
-			if (elementResult.id !== undefined) {
-				const name =  elementResult.name
-				const id =  elementResult.id 
-				filters.push( { name : id } )
-			}
-			else {
-				for (const parentElement of element.parents) {
-					const parentElementResult = resultList[parentElement.name]
-					assert(parentElementResult !== undefined)
-					const parentFilters = recursivelyBuildParentFilters(parentElementResult)
-					for (const filter of parentFilters)
-						filters.push(filter)
+		//===== build parent filter list
+		// for each floor from lowest to highest 
+		for (let floor = 0 ; floor < this.#floorArray.length; floor++) {
+			const floorElementArray = this.#floorArray[floor]
+			// for each element on this floor
+			for (const element of floorElementArray) {
+				const result = resultList[element.name]
+				assert(result !== undefined)
+
+				const filterList = {} 
+
+				if (result.type !== null) {
+					// direct filter
+					filterList[result.name] = result.id
 				}
+				else {
+					// append parent filters
+					for (const parentElement of element.parents) {
+						const parentElementResult = resultList[parentElement.name]
+						assert(parentElementResult !== undefined)
+						const parentFilterList = parentElementResult.parentFilters
+						for (var [filterName, filterValue] of Object.entries(parentFilterList) ) {
+							filterList[filterName] = filterValue
+						}
+					}
+				}
+				result.parentFilters = filterList
 			}
-			return filters 
 		}
 
+
+		//===== determine element count
 		// for each floor from lowest to highest 
 		for (let floor = 0 ; floor < this.#floorArray.length; floor++) {
 			const floorElementArray = this.#floorArray[floor]
@@ -282,7 +298,8 @@ class SelectorModel {
 				// ignore element if its result is already known
 				if (result.type !== null)
 					continue
-				const parentFilters = recursivelyBuildParentFilters(result)
+				const parentFilters = result.parentFilters
+				assert(parentFilters !== undefined)
 				assert(typeof(element.findChildrenCountFunction) == 'function')
 				result.type = 'counter'
 				result.count = element.findChildrenCountFunction(parentFilters)
