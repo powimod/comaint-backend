@@ -17,7 +17,6 @@
 'use strict'
 const assert = require('assert');
 
-
 class SelectorModel {
 	static #model = null;
 
@@ -28,24 +27,29 @@ class SelectorModel {
 		return parseInt(Math.random() * 1000)
 	}
 
+	static parcFamilyCount = (parentFilters) => {
+		console.log('dOm filters', parentFilters)
+		return 222;
+	}
+
 	static #elementList = {
-		'equipment-family': {
+		'parc-family': {
+			findParentIdFunction: this.randomParentId,
+			findChildrenCountFunction: this.parcFamilyCount
+		},
+		'parc-type': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'equipment-type': {
+		'parc-equipment': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'equipment': {
+		'parc-unit': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'equipment-unit': {
-			findParentIdFunction: this.randomParentId,
-			findChildrenCountFunction: this.randomChildrenCount
-		},
-		'equipment-section': {
+		'parc-section': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
@@ -57,23 +61,23 @@ class SelectorModel {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'article-category': {
+		'stock-category': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'article-subcategory': {
+		'stock-subcategory': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'article': {
+		'stock-article': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'article-unit': {
+		'stock-unit': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
-		'article-section': {
+		'stock-section': {
 			findParentIdFunction: this.randomParentId,
 			findChildrenCountFunction: this.randomChildrenCount
 		},
@@ -84,21 +88,21 @@ class SelectorModel {
 	}
 
 	static #linkArray = [
-		{ source: 'equipment-type',    target: 'equipment-family' },
-		{ source: 'equipment',         target: 'equipment-type' },
-		{ source: 'equipment-section', target: 'equipment-unit' },
-		{ source: 'equipment',         target: 'equipment-section' },
+		{ source: 'parc-type',    target: 'parc-family' },
+		{ source: 'parc-equipment',         target: 'parc-type' },
+		{ source: 'parc-section', target: 'parc-unit' },
+		{ source: 'parc-equipment',         target: 'parc-section' },
 
-		{ source: 'workorder',         target: 'equipment' },
-		{ source: 'intervention',      target: 'equipment' },
+		{ source: 'workorder',         target: 'parc-equipment' },
+		{ source: 'intervention',      target: 'parc-equipment' },
 
-		{ source: 'article-subcategory', target: 'article-category' },
-		{ source: 'article',             target: 'article-subcategory' },
-		{ source: 'article-section',     target: 'article-unit' },
-		{ source: 'article',             target: 'article-section' },
+		{ source: 'stock-subcategory', target: 'stock-category' },
+		{ source: 'stock-article',             target: 'stock-subcategory' },
+		{ source: 'stock-section',     target: 'stock-unit' },
+		{ source: 'stock-article',             target: 'stock-section' },
 
-		{ source: 'nomenclature',     target: 'article' },
-		{ source: 'nomenclature',     target: 'equipment' },
+		{ source: 'nomenclature',     target: 'stock-article' },
+		{ source: 'nomenclature',     target: 'parc-equipment' },
 	]
 	static #elementArray = []
 	static #floorArray = []
@@ -177,28 +181,24 @@ class SelectorModel {
 			this.#floorArray.push(floorElementArray)
 		}
 
-		// print a report
-		if (false) {
-			let floor = -1
-			for (const floorElementArray of this.#floorArray){
-				floor++
-				console.log("Floor n°", floor)
-				for (const element of floorElementArray)
-					console.log("- element", element.name)
-			}
+		/* TODO cleanup
+		let floor = -1
+		for (const floorElementArray of this.#floorArray){
+			floor++
+			console.log("Floor n°", floor)
+			for (const element of floorElementArray)
+				console.log("- element", element.name)
 		}
-
-		//this.query({ 'equipment': 127, 'article': 124 })
-		this.query({ 'equipment': 127 })
+		*/
 	}
 
 
-
-
-	static async query(filters) {
-		assert(filters !== undefined);
+	static async query(selectors) {
+		assert(selectors !== undefined);
 		assert(this.#model !== null);
 		const db = this.#model.db;
+
+		console.log("dOm selectors: ", selectors)
 
 		// initialize result array
 		const resultList = {}
@@ -207,7 +207,7 @@ class SelectorModel {
 				name: element.name,
 				type: null // unknown
 			}
-			const elementFilterValue = filters[element.name]
+			const elementFilterValue = selectors[element.name]
 			if (elementFilterValue !== undefined) {
 				if (isNaN(elementFilterValue))
 					throw new Error(`Filter ${element.name} value is not a number`)
@@ -283,40 +283,13 @@ class SelectorModel {
 				if (result.type !== null)
 					continue
 				const parentFilters = recursivelyBuildParentFilters(result)
-				/*
-				for (const parentElement of element.parents) {
-					const parentResult = resultList[parentElement.name]
-					assert(parentResult.type !== undefined)
-					console.log("dOm================", parentResult)
-					assert(parentResult.id  !== undefined)
-					parentFilters[parentResult.name] = parentResult.id
-				}
-				*/
 				assert(typeof(element.findChildrenCountFunction) == 'function')
 				result.type = 'counter'
 				result.count = element.findChildrenCountFunction(parentFilters)
 			}
 		}
 
-		const resultArray = Object.values(resultList)
-
-		if (true === true) {
-			for (const result of resultArray){
-				switch (result.type) {
-					case 'element' :
-					case 'selector' :
-						console.log(`- ${result.name} : ${result.type} ID=${result.id}`)
-						break
-					case 'counter' :
-						console.log(`- ${result.name} : ${result.type} count=${result.count}`)
-						break
-					default:
-						assert(true == false)
-				}
-			}
-		}
-
-		return resultArray;
+		return Object.values(resultList)
 	}
 
 }
