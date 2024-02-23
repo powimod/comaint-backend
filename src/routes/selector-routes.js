@@ -29,11 +29,11 @@ module.exports = (app, SelectorModel, View) => {
 			if (selectors === undefined)
 				throw new Error(`Can't find <selectors> object in request body`)
 			assert(request.companyId)
-			if (selectors.companyId === undefined) {
-				selectors.companyId = request.companyId
+			if (selectors.company === undefined) {
+				selectors.company = request.companyId
 			}
 			else {
-				if (selectors.companyId !== request.companyId)
+				if (selectors.company !== request.companyId)
 					throw new Error('Unauthorized access')
 			}
 			const results = await SelectorModel.query(selectors)
