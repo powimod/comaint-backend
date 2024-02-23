@@ -130,11 +130,21 @@ module.exports = (app, UserModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/user/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/user/:userId', withAuth, async (request, response) => {
 		try {
+			let userId = request.params.userId;
+			assert (userId !== undefined);
+			if (isNaN(userId)) {
+				throw new Error(`User ID <${ userId}> is not a number`);
+			userId = parseInt(userId);
+
 			const user = request.body.user
 			if (user === undefined)
 				throw new Error(`Can't find <user> object in request body`)
+
+			if (user.id !== undefined && user.id != userId )
+				throw new Error(`<User> ID does not match`)
+
 			// control root property 
 			if (user.companyId === undefined) {
 				user.companyId = request.companyId;
@@ -156,7 +166,7 @@ module.exports = (app, UserModel, View) => {
 	});
 
 
-	app.post('/api/v1/user/:userId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/user/:userId', withAuth, async (request, response) => {
 		let userId = request.params.userId;
 		assert (userId !== undefined);
 		if (isNaN(userId)) {

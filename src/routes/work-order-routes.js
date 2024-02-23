@@ -129,11 +129,21 @@ module.exports = (app, WorkOrderModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/work_order/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/work-order/:workOrderId', withAuth, async (request, response) => {
 		try {
+			let workOrderId = request.params.workOrderId;
+			assert (workOrderId !== undefined);
+			if (isNaN(workOrderId)) {
+				throw new Error(`WorkOrder ID <${ workOrderId}> is not a number`);
+			workOrderId = parseInt(workOrderId);
+
 			const workOrder = request.body.workOrder
 			if (workOrder === undefined)
 				throw new Error(`Can't find <workOrder> object in request body`)
+
+			if (workOrder.id !== undefined && workOrder.id != workOrderId )
+				throw new Error(`<WorkOrder> ID does not match`)
+
 			// control root property 
 			if (workOrder.companyId === undefined) {
 				workOrder.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, WorkOrderModel, View) => {
 	});
 
 
-	app.post('/api/v1/work-order/:workOrderId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/work-order/:workOrderId', withAuth, async (request, response) => {
 		let workOrderId = request.params.workOrderId;
 		assert (workOrderId !== undefined);
 		if (isNaN(workOrderId)) {

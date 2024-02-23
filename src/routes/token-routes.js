@@ -60,7 +60,7 @@ module.exports = (app, TokenModel, View) => {
 			const token = await TokenModel.getTokenById(tokenId);
 			if (token === null)
 				throw new Error(`Token ID <${ tokenId }> not found`);
-
+			
 			// No root property to control
 			View.sendJsonResult(response, { token });
 		}
@@ -107,12 +107,22 @@ module.exports = (app, TokenModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/token/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/token/:tokenId', withAuth, async (request, response) => {
 		try {
+			let tokenId = request.params.tokenId;
+			assert (tokenId !== undefined);
+			if (isNaN(tokenId)) {
+				throw new Error(`Token ID <${ tokenId}> is not a number`);
+			tokenId = parseInt(tokenId);
+
 			const token = request.body.token
 			if (token === undefined)
 				throw new Error(`Can't find <token> object in request body`)
 
+			if (token.id !== undefined && token.id != tokenId )
+				throw new Error(`<Token> ID does not match`)
+
+			
 			// No root property to control
 			let editedToken = await TokenModel.editToken(token, request.t)
 			if (editedToken.id !== token.id)
@@ -125,7 +135,7 @@ module.exports = (app, TokenModel, View) => {
 	});
 
 
-	app.post('/api/v1/token/:tokenId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/token/:tokenId', withAuth, async (request, response) => {
 		let tokenId = request.params.tokenId;
 		assert (tokenId !== undefined);
 		if (isNaN(tokenId)) {
@@ -144,7 +154,7 @@ module.exports = (app, TokenModel, View) => {
 			const token = await TokenModel.getTokenById(tokenId);
 			if (token === null)
 				throw new Error(`Token ID <${ tokenId }> not found`);
-
+			
 			// No root property to control
 			const success = await TokenModel.deleteById(tokenId, recursive);
 			View.sendJsonResult(response, {success});

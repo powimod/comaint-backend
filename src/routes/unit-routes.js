@@ -122,11 +122,21 @@ module.exports = (app, UnitModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/unit/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/unit/:unitId', withAuth, async (request, response) => {
 		try {
+			let unitId = request.params.unitId;
+			assert (unitId !== undefined);
+			if (isNaN(unitId)) {
+				throw new Error(`Unit ID <${ unitId}> is not a number`);
+			unitId = parseInt(unitId);
+
 			const unit = request.body.unit
 			if (unit === undefined)
 				throw new Error(`Can't find <unit> object in request body`)
+
+			if (unit.id !== undefined && unit.id != unitId )
+				throw new Error(`<Unit> ID does not match`)
+
 			// control root property 
 			if (unit.companyId === undefined) {
 				unit.companyId = request.companyId;
@@ -146,7 +156,7 @@ module.exports = (app, UnitModel, View) => {
 	});
 
 
-	app.post('/api/v1/unit/:unitId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/unit/:unitId', withAuth, async (request, response) => {
 		let unitId = request.params.unitId;
 		assert (unitId !== undefined);
 		if (isNaN(unitId)) {

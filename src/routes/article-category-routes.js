@@ -122,11 +122,21 @@ module.exports = (app, ArticleCategoryModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/article_category/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/article-category/:articleCategoryId', withAuth, async (request, response) => {
 		try {
+			let articleCategoryId = request.params.articleCategoryId;
+			assert (articleCategoryId !== undefined);
+			if (isNaN(articleCategoryId)) {
+				throw new Error(`ArticleCategory ID <${ articleCategoryId}> is not a number`);
+			articleCategoryId = parseInt(articleCategoryId);
+
 			const articleCategory = request.body.articleCategory
 			if (articleCategory === undefined)
 				throw new Error(`Can't find <articleCategory> object in request body`)
+
+			if (articleCategory.id !== undefined && articleCategory.id != articleCategoryId )
+				throw new Error(`<ArticleCategory> ID does not match`)
+
 			// control root property 
 			if (articleCategory.companyId === undefined) {
 				articleCategory.companyId = request.companyId;
@@ -146,7 +156,7 @@ module.exports = (app, ArticleCategoryModel, View) => {
 	});
 
 
-	app.post('/api/v1/article-category/:articleCategoryId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/article-category/:articleCategoryId', withAuth, async (request, response) => {
 		let articleCategoryId = request.params.articleCategoryId;
 		assert (articleCategoryId !== undefined);
 		if (isNaN(articleCategoryId)) {

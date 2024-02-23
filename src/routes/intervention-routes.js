@@ -129,11 +129,21 @@ module.exports = (app, InterventionModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/intervention/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/intervention/:interventionId', withAuth, async (request, response) => {
 		try {
+			let interventionId = request.params.interventionId;
+			assert (interventionId !== undefined);
+			if (isNaN(interventionId)) {
+				throw new Error(`Intervention ID <${ interventionId}> is not a number`);
+			interventionId = parseInt(interventionId);
+
 			const intervention = request.body.intervention
 			if (intervention === undefined)
 				throw new Error(`Can't find <intervention> object in request body`)
+
+			if (intervention.id !== undefined && intervention.id != interventionId )
+				throw new Error(`<Intervention> ID does not match`)
+
 			// control root property 
 			if (intervention.companyId === undefined) {
 				intervention.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, InterventionModel, View) => {
 	});
 
 
-	app.post('/api/v1/intervention/:interventionId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/intervention/:interventionId', withAuth, async (request, response) => {
 		let interventionId = request.params.interventionId;
 		assert (interventionId !== undefined);
 		if (isNaN(interventionId)) {

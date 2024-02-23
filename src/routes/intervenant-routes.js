@@ -136,11 +136,21 @@ module.exports = (app, IntervenantModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/intervenant/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/intervenant/:intervenantId', withAuth, async (request, response) => {
 		try {
+			let intervenantId = request.params.intervenantId;
+			assert (intervenantId !== undefined);
+			if (isNaN(intervenantId)) {
+				throw new Error(`Intervenant ID <${ intervenantId}> is not a number`);
+			intervenantId = parseInt(intervenantId);
+
 			const intervenant = request.body.intervenant
 			if (intervenant === undefined)
 				throw new Error(`Can't find <intervenant> object in request body`)
+
+			if (intervenant.id !== undefined && intervenant.id != intervenantId )
+				throw new Error(`<Intervenant> ID does not match`)
+
 			// control root property 
 			if (intervenant.companyId === undefined) {
 				intervenant.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, IntervenantModel, View) => {
 	});
 
 
-	app.post('/api/v1/intervenant/:intervenantId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/intervenant/:intervenantId', withAuth, async (request, response) => {
 		let intervenantId = request.params.intervenantId;
 		assert (intervenantId !== undefined);
 		if (isNaN(intervenantId)) {

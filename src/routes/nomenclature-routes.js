@@ -143,11 +143,21 @@ module.exports = (app, NomenclatureModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/nomenclature/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/nomenclature/:nomenclatureId', withAuth, async (request, response) => {
 		try {
+			let nomenclatureId = request.params.nomenclatureId;
+			assert (nomenclatureId !== undefined);
+			if (isNaN(nomenclatureId)) {
+				throw new Error(`Nomenclature ID <${ nomenclatureId}> is not a number`);
+			nomenclatureId = parseInt(nomenclatureId);
+
 			const nomenclature = request.body.nomenclature
 			if (nomenclature === undefined)
 				throw new Error(`Can't find <nomenclature> object in request body`)
+
+			if (nomenclature.id !== undefined && nomenclature.id != nomenclatureId )
+				throw new Error(`<Nomenclature> ID does not match`)
+
 			// control root property 
 			if (nomenclature.companyId === undefined) {
 				nomenclature.companyId = request.companyId;
@@ -167,7 +177,7 @@ module.exports = (app, NomenclatureModel, View) => {
 	});
 
 
-	app.post('/api/v1/nomenclature/:nomenclatureId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/nomenclature/:nomenclatureId', withAuth, async (request, response) => {
 		let nomenclatureId = request.params.nomenclatureId;
 		assert (nomenclatureId !== undefined);
 		if (isNaN(nomenclatureId)) {

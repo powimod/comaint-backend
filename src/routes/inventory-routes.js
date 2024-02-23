@@ -136,11 +136,21 @@ module.exports = (app, InventoryModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/inventory/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/inventory/:inventoryId', withAuth, async (request, response) => {
 		try {
+			let inventoryId = request.params.inventoryId;
+			assert (inventoryId !== undefined);
+			if (isNaN(inventoryId)) {
+				throw new Error(`Inventory ID <${ inventoryId}> is not a number`);
+			inventoryId = parseInt(inventoryId);
+
 			const inventory = request.body.inventory
 			if (inventory === undefined)
 				throw new Error(`Can't find <inventory> object in request body`)
+
+			if (inventory.id !== undefined && inventory.id != inventoryId )
+				throw new Error(`<Inventory> ID does not match`)
+
 			// control root property 
 			if (inventory.companyId === undefined) {
 				inventory.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, InventoryModel, View) => {
 	});
 
 
-	app.post('/api/v1/inventory/:inventoryId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/inventory/:inventoryId', withAuth, async (request, response) => {
 		let inventoryId = request.params.inventoryId;
 		assert (inventoryId !== undefined);
 		if (isNaN(inventoryId)) {

@@ -136,11 +136,21 @@ module.exports = (app, ArticleToChangeModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/article_to_change/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/article-to-change/:articleToChangeId', withAuth, async (request, response) => {
 		try {
+			let articleToChangeId = request.params.articleToChangeId;
+			assert (articleToChangeId !== undefined);
+			if (isNaN(articleToChangeId)) {
+				throw new Error(`ArticleToChange ID <${ articleToChangeId}> is not a number`);
+			articleToChangeId = parseInt(articleToChangeId);
+
 			const articleToChange = request.body.articleToChange
 			if (articleToChange === undefined)
 				throw new Error(`Can't find <articleToChange> object in request body`)
+
+			if (articleToChange.id !== undefined && articleToChange.id != articleToChangeId )
+				throw new Error(`<ArticleToChange> ID does not match`)
+
 			// control root property 
 			if (articleToChange.companyId === undefined) {
 				articleToChange.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, ArticleToChangeModel, View) => {
 	});
 
 
-	app.post('/api/v1/article-to-change/:articleToChangeId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/article-to-change/:articleToChangeId', withAuth, async (request, response) => {
 		let articleToChangeId = request.params.articleToChangeId;
 		assert (articleToChangeId !== undefined);
 		if (isNaN(articleToChangeId)) {

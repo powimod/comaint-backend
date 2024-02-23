@@ -136,11 +136,21 @@ module.exports = (app, CatalogModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/catalog/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/catalog/:catalogId', withAuth, async (request, response) => {
 		try {
+			let catalogId = request.params.catalogId;
+			assert (catalogId !== undefined);
+			if (isNaN(catalogId)) {
+				throw new Error(`Catalog ID <${ catalogId}> is not a number`);
+			catalogId = parseInt(catalogId);
+
 			const catalog = request.body.catalog
 			if (catalog === undefined)
 				throw new Error(`Can't find <catalog> object in request body`)
+
+			if (catalog.id !== undefined && catalog.id != catalogId )
+				throw new Error(`<Catalog> ID does not match`)
+
 			// control root property 
 			if (catalog.companyId === undefined) {
 				catalog.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, CatalogModel, View) => {
 	});
 
 
-	app.post('/api/v1/catalog/:catalogId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/catalog/:catalogId', withAuth, async (request, response) => {
 		let catalogId = request.params.catalogId;
 		assert (catalogId !== undefined);
 		if (isNaN(catalogId)) {

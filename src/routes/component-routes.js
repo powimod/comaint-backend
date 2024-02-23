@@ -129,11 +129,21 @@ module.exports = (app, ComponentModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/component/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/component/:componentId', withAuth, async (request, response) => {
 		try {
+			let componentId = request.params.componentId;
+			assert (componentId !== undefined);
+			if (isNaN(componentId)) {
+				throw new Error(`Component ID <${ componentId}> is not a number`);
+			componentId = parseInt(componentId);
+
 			const component = request.body.component
 			if (component === undefined)
 				throw new Error(`Can't find <component> object in request body`)
+
+			if (component.id !== undefined && component.id != componentId )
+				throw new Error(`<Component> ID does not match`)
+
 			// control root property 
 			if (component.companyId === undefined) {
 				component.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, ComponentModel, View) => {
 	});
 
 
-	app.post('/api/v1/component/:componentId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/component/:componentId', withAuth, async (request, response) => {
 		let componentId = request.params.componentId;
 		assert (componentId !== undefined);
 		if (isNaN(componentId)) {

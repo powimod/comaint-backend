@@ -136,11 +136,21 @@ module.exports = (app, ArticleModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/article/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/article/:articleId', withAuth, async (request, response) => {
 		try {
+			let articleId = request.params.articleId;
+			assert (articleId !== undefined);
+			if (isNaN(articleId)) {
+				throw new Error(`Article ID <${ articleId}> is not a number`);
+			articleId = parseInt(articleId);
+
 			const article = request.body.article
 			if (article === undefined)
 				throw new Error(`Can't find <article> object in request body`)
+
+			if (article.id !== undefined && article.id != articleId )
+				throw new Error(`<Article> ID does not match`)
+
 			// control root property 
 			if (article.companyId === undefined) {
 				article.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, ArticleModel, View) => {
 	});
 
 
-	app.post('/api/v1/article/:articleId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/article/:articleId', withAuth, async (request, response) => {
 		let articleId = request.params.articleId;
 		assert (articleId !== undefined);
 		if (isNaN(articleId)) {

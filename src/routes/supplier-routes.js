@@ -122,11 +122,21 @@ module.exports = (app, SupplierModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/supplier/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/supplier/:supplierId', withAuth, async (request, response) => {
 		try {
+			let supplierId = request.params.supplierId;
+			assert (supplierId !== undefined);
+			if (isNaN(supplierId)) {
+				throw new Error(`Supplier ID <${ supplierId}> is not a number`);
+			supplierId = parseInt(supplierId);
+
 			const supplier = request.body.supplier
 			if (supplier === undefined)
 				throw new Error(`Can't find <supplier> object in request body`)
+
+			if (supplier.id !== undefined && supplier.id != supplierId )
+				throw new Error(`<Supplier> ID does not match`)
+
 			// control root property 
 			if (supplier.companyId === undefined) {
 				supplier.companyId = request.companyId;
@@ -146,7 +156,7 @@ module.exports = (app, SupplierModel, View) => {
 	});
 
 
-	app.post('/api/v1/supplier/:supplierId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/supplier/:supplierId', withAuth, async (request, response) => {
 		let supplierId = request.params.supplierId;
 		assert (supplierId !== undefined);
 		if (isNaN(supplierId)) {

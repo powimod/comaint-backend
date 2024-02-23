@@ -136,11 +136,21 @@ module.exports = (app, EquipmentModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/equipment/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/equipment/:equipmentId', withAuth, async (request, response) => {
 		try {
+			let equipmentId = request.params.equipmentId;
+			assert (equipmentId !== undefined);
+			if (isNaN(equipmentId)) {
+				throw new Error(`Equipment ID <${ equipmentId}> is not a number`);
+			equipmentId = parseInt(equipmentId);
+
 			const equipment = request.body.equipment
 			if (equipment === undefined)
 				throw new Error(`Can't find <equipment> object in request body`)
+
+			if (equipment.id !== undefined && equipment.id != equipmentId )
+				throw new Error(`<Equipment> ID does not match`)
+
 			// control root property 
 			if (equipment.companyId === undefined) {
 				equipment.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, EquipmentModel, View) => {
 	});
 
 
-	app.post('/api/v1/equipment/:equipmentId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/equipment/:equipmentId', withAuth, async (request, response) => {
 		let equipmentId = request.params.equipmentId;
 		assert (equipmentId !== undefined);
 		if (isNaN(equipmentId)) {

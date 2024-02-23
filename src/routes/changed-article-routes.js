@@ -136,11 +136,21 @@ module.exports = (app, ChangedArticleModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/changed_article/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/changed-article/:changedArticleId', withAuth, async (request, response) => {
 		try {
+			let changedArticleId = request.params.changedArticleId;
+			assert (changedArticleId !== undefined);
+			if (isNaN(changedArticleId)) {
+				throw new Error(`ChangedArticle ID <${ changedArticleId}> is not a number`);
+			changedArticleId = parseInt(changedArticleId);
+
 			const changedArticle = request.body.changedArticle
 			if (changedArticle === undefined)
 				throw new Error(`Can't find <changedArticle> object in request body`)
+
+			if (changedArticle.id !== undefined && changedArticle.id != changedArticleId )
+				throw new Error(`<ChangedArticle> ID does not match`)
+
 			// control root property 
 			if (changedArticle.companyId === undefined) {
 				changedArticle.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, ChangedArticleModel, View) => {
 	});
 
 
-	app.post('/api/v1/changed-article/:changedArticleId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/changed-article/:changedArticleId', withAuth, async (request, response) => {
 		let changedArticleId = request.params.changedArticleId;
 		assert (changedArticleId !== undefined);
 		if (isNaN(changedArticleId)) {

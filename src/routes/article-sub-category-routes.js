@@ -129,11 +129,21 @@ module.exports = (app, ArticleSubCategoryModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/article_sub_category/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/article-sub-category/:articleSubCategoryId', withAuth, async (request, response) => {
 		try {
+			let articleSubCategoryId = request.params.articleSubCategoryId;
+			assert (articleSubCategoryId !== undefined);
+			if (isNaN(articleSubCategoryId)) {
+				throw new Error(`ArticleSubCategory ID <${ articleSubCategoryId}> is not a number`);
+			articleSubCategoryId = parseInt(articleSubCategoryId);
+
 			const articleSubCategory = request.body.articleSubCategory
 			if (articleSubCategory === undefined)
 				throw new Error(`Can't find <articleSubCategory> object in request body`)
+
+			if (articleSubCategory.id !== undefined && articleSubCategory.id != articleSubCategoryId )
+				throw new Error(`<ArticleSubCategory> ID does not match`)
+
 			// control root property 
 			if (articleSubCategory.companyId === undefined) {
 				articleSubCategory.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, ArticleSubCategoryModel, View) => {
 	});
 
 
-	app.post('/api/v1/article-sub-category/:articleSubCategoryId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/article-sub-category/:articleSubCategoryId', withAuth, async (request, response) => {
 		let articleSubCategoryId = request.params.articleSubCategoryId;
 		assert (articleSubCategoryId !== undefined);
 		if (isNaN(articleSubCategoryId)) {

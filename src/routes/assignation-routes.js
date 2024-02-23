@@ -136,11 +136,21 @@ module.exports = (app, AssignationModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/assignation/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/assignation/:assignationId', withAuth, async (request, response) => {
 		try {
+			let assignationId = request.params.assignationId;
+			assert (assignationId !== undefined);
+			if (isNaN(assignationId)) {
+				throw new Error(`Assignation ID <${ assignationId}> is not a number`);
+			assignationId = parseInt(assignationId);
+
 			const assignation = request.body.assignation
 			if (assignation === undefined)
 				throw new Error(`Can't find <assignation> object in request body`)
+
+			if (assignation.id !== undefined && assignation.id != assignationId )
+				throw new Error(`<Assignation> ID does not match`)
+
 			// control root property 
 			if (assignation.companyId === undefined) {
 				assignation.companyId = request.companyId;
@@ -160,7 +170,7 @@ module.exports = (app, AssignationModel, View) => {
 	});
 
 
-	app.post('/api/v1/assignation/:assignationId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/assignation/:assignationId', withAuth, async (request, response) => {
 		let assignationId = request.params.assignationId;
 		assert (assignationId !== undefined);
 		if (isNaN(assignationId)) {

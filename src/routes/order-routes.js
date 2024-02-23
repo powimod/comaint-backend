@@ -129,11 +129,21 @@ module.exports = (app, OrderModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/order/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/order/:orderId', withAuth, async (request, response) => {
 		try {
+			let orderId = request.params.orderId;
+			assert (orderId !== undefined);
+			if (isNaN(orderId)) {
+				throw new Error(`Order ID <${ orderId}> is not a number`);
+			orderId = parseInt(orderId);
+
 			const order = request.body.order
 			if (order === undefined)
 				throw new Error(`Can't find <order> object in request body`)
+
+			if (order.id !== undefined && order.id != orderId )
+				throw new Error(`<Order> ID does not match`)
+
 			// control root property 
 			if (order.companyId === undefined) {
 				order.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, OrderModel, View) => {
 	});
 
 
-	app.post('/api/v1/order/:orderId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/order/:orderId', withAuth, async (request, response) => {
 		let orderId = request.params.orderId;
 		assert (orderId !== undefined);
 		if (isNaN(orderId)) {

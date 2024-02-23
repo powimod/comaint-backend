@@ -129,11 +129,21 @@ module.exports = (app, SubscriptionModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/subscription/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/subscription/:subscriptionId', withAuth, async (request, response) => {
 		try {
+			let subscriptionId = request.params.subscriptionId;
+			assert (subscriptionId !== undefined);
+			if (isNaN(subscriptionId)) {
+				throw new Error(`Subscription ID <${ subscriptionId}> is not a number`);
+			subscriptionId = parseInt(subscriptionId);
+
 			const subscription = request.body.subscription
 			if (subscription === undefined)
 				throw new Error(`Can't find <subscription> object in request body`)
+
+			if (subscription.id !== undefined && subscription.id != subscriptionId )
+				throw new Error(`<Subscription> ID does not match`)
+
 			// control root property 
 			if (subscription.companyId === undefined) {
 				subscription.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, SubscriptionModel, View) => {
 	});
 
 
-	app.post('/api/v1/subscription/:subscriptionId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/subscription/:subscriptionId', withAuth, async (request, response) => {
 		let subscriptionId = request.params.subscriptionId;
 		assert (subscriptionId !== undefined);
 		if (isNaN(subscriptionId)) {

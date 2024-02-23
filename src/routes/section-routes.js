@@ -129,11 +129,21 @@ module.exports = (app, SectionModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/section/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/section/:sectionId', withAuth, async (request, response) => {
 		try {
+			let sectionId = request.params.sectionId;
+			assert (sectionId !== undefined);
+			if (isNaN(sectionId)) {
+				throw new Error(`Section ID <${ sectionId}> is not a number`);
+			sectionId = parseInt(sectionId);
+
 			const section = request.body.section
 			if (section === undefined)
 				throw new Error(`Can't find <section> object in request body`)
+
+			if (section.id !== undefined && section.id != sectionId )
+				throw new Error(`<Section> ID does not match`)
+
 			// control root property 
 			if (section.companyId === undefined) {
 				section.companyId = request.companyId;
@@ -153,7 +163,7 @@ module.exports = (app, SectionModel, View) => {
 	});
 
 
-	app.post('/api/v1/section/:sectionId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/section/:sectionId', withAuth, async (request, response) => {
 		let sectionId = request.params.sectionId;
 		assert (sectionId !== undefined);
 		if (isNaN(sectionId)) {

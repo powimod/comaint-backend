@@ -114,11 +114,20 @@ module.exports = (app, CompanyModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/company/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/company/:companyId', withAuth, async (request, response) => {
 		try {
+			let companyId = request.params.companyId;
+			assert (companyId !== undefined);
+			if (isNaN(companyId)) {
+				throw new Error(`Company ID <${ companyId}> is not a number`);
+			companyId = parseInt(companyId);
+
 			const company = request.body.company
 			if (company === undefined)
 				throw new Error(`Can't find <company> object in request body`)
+
+			if (company.id !== undefined && company.id != companyId )
+				throw new Error(`<Company> ID does not match`)
 			let editedCompany = await CompanyModel.editCompany(company, request.t)
 			if (editedCompany.id !== company.id)
 				throw new Error(`Edited Company ID does not match`)
@@ -130,7 +139,7 @@ module.exports = (app, CompanyModel, View) => {
 	});
 
 
-	app.post('/api/v1/company/:companyId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/company/:companyId', withAuth, async (request, response) => {
 		let companyId = request.params.companyId;
 		assert (companyId !== undefined);
 		if (isNaN(companyId)) {

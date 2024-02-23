@@ -122,11 +122,21 @@ module.exports = (app, EquipmentFamilyModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/equipment_family/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/equipment-family/:equipmentFamilyId', withAuth, async (request, response) => {
 		try {
+			let equipmentFamilyId = request.params.equipmentFamilyId;
+			assert (equipmentFamilyId !== undefined);
+			if (isNaN(equipmentFamilyId)) {
+				throw new Error(`EquipmentFamily ID <${ equipmentFamilyId}> is not a number`);
+			equipmentFamilyId = parseInt(equipmentFamilyId);
+
 			const equipmentFamily = request.body.equipmentFamily
 			if (equipmentFamily === undefined)
 				throw new Error(`Can't find <equipmentFamily> object in request body`)
+
+			if (equipmentFamily.id !== undefined && equipmentFamily.id != equipmentFamilyId )
+				throw new Error(`<EquipmentFamily> ID does not match`)
+
 			// control root property 
 			if (equipmentFamily.companyId === undefined) {
 				equipmentFamily.companyId = request.companyId;
@@ -146,7 +156,7 @@ module.exports = (app, EquipmentFamilyModel, View) => {
 	});
 
 
-	app.post('/api/v1/equipment-family/:equipmentFamilyId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/equipment-family/:equipmentFamilyId', withAuth, async (request, response) => {
 		let equipmentFamilyId = request.params.equipmentFamilyId;
 		assert (equipmentFamilyId !== undefined);
 		if (isNaN(equipmentFamilyId)) {

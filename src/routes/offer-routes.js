@@ -53,7 +53,7 @@ module.exports = (app, OfferModel, View) => {
 			const offer = await OfferModel.getOfferById(offerId);
 			if (offer === null)
 				throw new Error(`Offer ID <${ offerId }> not found`);
-
+			
 			// No root property to control
 			View.sendJsonResult(response, { offer });
 		}
@@ -100,12 +100,22 @@ module.exports = (app, OfferModel, View) => {
 		}
 	});
 
-	app.post('/api/v1/offer/edit', withAuth, async (request, response) => {
+	app.put('/api/v1/offer/:offerId', withAuth, async (request, response) => {
 		try {
+			let offerId = request.params.offerId;
+			assert (offerId !== undefined);
+			if (isNaN(offerId)) {
+				throw new Error(`Offer ID <${ offerId}> is not a number`);
+			offerId = parseInt(offerId);
+
 			const offer = request.body.offer
 			if (offer === undefined)
 				throw new Error(`Can't find <offer> object in request body`)
 
+			if (offer.id !== undefined && offer.id != offerId )
+				throw new Error(`<Offer> ID does not match`)
+
+			
 			// No root property to control
 			let editedOffer = await OfferModel.editOffer(offer, request.t)
 			if (editedOffer.id !== offer.id)
@@ -118,7 +128,7 @@ module.exports = (app, OfferModel, View) => {
 	});
 
 
-	app.post('/api/v1/offer/:offerId/delete', withAuth, async (request, response) => {
+	app.delete('/api/v1/offer/:offerId', withAuth, async (request, response) => {
 		let offerId = request.params.offerId;
 		assert (offerId !== undefined);
 		if (isNaN(offerId)) {
@@ -137,7 +147,7 @@ module.exports = (app, OfferModel, View) => {
 			const offer = await OfferModel.getOfferById(offerId);
 			if (offer === null)
 				throw new Error(`Offer ID <${ offerId }> not found`);
-
+			
 			// No root property to control
 			const success = await OfferModel.deleteById(offerId, recursive);
 			View.sendJsonResult(response, {success});
