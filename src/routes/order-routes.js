@@ -133,7 +133,7 @@ module.exports = (app, OrderModel, View) => {
 		try {
 			let orderId = request.params.orderId;
 			assert (orderId !== undefined);
-			if (isNaN(orderId)) {
+			if (isNaN(orderId))
 				throw new Error(`Order ID <${ orderId}> is not a number`);
 			orderId = parseInt(orderId);
 

@@ -133,7 +133,7 @@ module.exports = (app, WorkOrderModel, View) => {
 		try {
 			let workOrderId = request.params.workOrderId;
 			assert (workOrderId !== undefined);
-			if (isNaN(workOrderId)) {
+			if (isNaN(workOrderId))
 				throw new Error(`WorkOrder ID <${ workOrderId}> is not a number`);
 			workOrderId = parseInt(workOrderId);
 

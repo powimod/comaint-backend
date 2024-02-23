@@ -111,7 +111,7 @@ module.exports = (app, TokenModel, View) => {
 		try {
 			let tokenId = request.params.tokenId;
 			assert (tokenId !== undefined);
-			if (isNaN(tokenId)) {
+			if (isNaN(tokenId))
 				throw new Error(`Token ID <${ tokenId}> is not a number`);
 			tokenId = parseInt(tokenId);
 

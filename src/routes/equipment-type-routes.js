@@ -133,7 +133,7 @@ module.exports = (app, EquipmentTypeModel, View) => {
 		try {
 			let equipmentTypeId = request.params.equipmentTypeId;
 			assert (equipmentTypeId !== undefined);
-			if (isNaN(equipmentTypeId)) {
+			if (isNaN(equipmentTypeId))
 				throw new Error(`EquipmentType ID <${ equipmentTypeId}> is not a number`);
 			equipmentTypeId = parseInt(equipmentTypeId);
 

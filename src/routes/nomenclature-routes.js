@@ -147,7 +147,7 @@ module.exports = (app, NomenclatureModel, View) => {
 		try {
 			let nomenclatureId = request.params.nomenclatureId;
 			assert (nomenclatureId !== undefined);
-			if (isNaN(nomenclatureId)) {
+			if (isNaN(nomenclatureId))
 				throw new Error(`Nomenclature ID <${ nomenclatureId}> is not a number`);
 			nomenclatureId = parseInt(nomenclatureId);
 

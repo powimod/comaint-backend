@@ -140,7 +140,7 @@ module.exports = (app, CatalogModel, View) => {
 		try {
 			let catalogId = request.params.catalogId;
 			assert (catalogId !== undefined);
-			if (isNaN(catalogId)) {
+			if (isNaN(catalogId))
 				throw new Error(`Catalog ID <${ catalogId}> is not a number`);
 			catalogId = parseInt(catalogId);
 

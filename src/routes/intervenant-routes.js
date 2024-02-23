@@ -140,7 +140,7 @@ module.exports = (app, IntervenantModel, View) => {
 		try {
 			let intervenantId = request.params.intervenantId;
 			assert (intervenantId !== undefined);
-			if (isNaN(intervenantId)) {
+			if (isNaN(intervenantId))
 				throw new Error(`Intervenant ID <${ intervenantId}> is not a number`);
 			intervenantId = parseInt(intervenantId);
 

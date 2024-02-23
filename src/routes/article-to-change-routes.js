@@ -140,7 +140,7 @@ module.exports = (app, ArticleToChangeModel, View) => {
 		try {
 			let articleToChangeId = request.params.articleToChangeId;
 			assert (articleToChangeId !== undefined);
-			if (isNaN(articleToChangeId)) {
+			if (isNaN(articleToChangeId))
 				throw new Error(`ArticleToChange ID <${ articleToChangeId}> is not a number`);
 			articleToChangeId = parseInt(articleToChangeId);
 

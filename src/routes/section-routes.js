@@ -133,7 +133,7 @@ module.exports = (app, SectionModel, View) => {
 		try {
 			let sectionId = request.params.sectionId;
 			assert (sectionId !== undefined);
-			if (isNaN(sectionId)) {
+			if (isNaN(sectionId))
 				throw new Error(`Section ID <${ sectionId}> is not a number`);
 			sectionId = parseInt(sectionId);
 

@@ -126,7 +126,7 @@ module.exports = (app, SupplierModel, View) => {
 		try {
 			let supplierId = request.params.supplierId;
 			assert (supplierId !== undefined);
-			if (isNaN(supplierId)) {
+			if (isNaN(supplierId))
 				throw new Error(`Supplier ID <${ supplierId}> is not a number`);
 			supplierId = parseInt(supplierId);
 

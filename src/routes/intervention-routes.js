@@ -133,7 +133,7 @@ module.exports = (app, InterventionModel, View) => {
 		try {
 			let interventionId = request.params.interventionId;
 			assert (interventionId !== undefined);
-			if (isNaN(interventionId)) {
+			if (isNaN(interventionId))
 				throw new Error(`Intervention ID <${ interventionId}> is not a number`);
 			interventionId = parseInt(interventionId);
 

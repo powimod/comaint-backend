@@ -126,7 +126,7 @@ module.exports = (app, UnitModel, View) => {
 		try {
 			let unitId = request.params.unitId;
 			assert (unitId !== undefined);
-			if (isNaN(unitId)) {
+			if (isNaN(unitId))
 				throw new Error(`Unit ID <${ unitId}> is not a number`);
 			unitId = parseInt(unitId);
 

@@ -140,7 +140,7 @@ module.exports = (app, OrderLineModel, View) => {
 		try {
 			let orderLineId = request.params.orderLineId;
 			assert (orderLineId !== undefined);
-			if (isNaN(orderLineId)) {
+			if (isNaN(orderLineId))
 				throw new Error(`OrderLine ID <${ orderLineId}> is not a number`);
 			orderLineId = parseInt(orderLineId);
 

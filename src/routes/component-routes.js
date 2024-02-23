@@ -133,7 +133,7 @@ module.exports = (app, ComponentModel, View) => {
 		try {
 			let componentId = request.params.componentId;
 			assert (componentId !== undefined);
-			if (isNaN(componentId)) {
+			if (isNaN(componentId))
 				throw new Error(`Component ID <${ componentId}> is not a number`);
 			componentId = parseInt(componentId);
 

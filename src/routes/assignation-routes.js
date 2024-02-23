@@ -140,7 +140,7 @@ module.exports = (app, AssignationModel, View) => {
 		try {
 			let assignationId = request.params.assignationId;
 			assert (assignationId !== undefined);
-			if (isNaN(assignationId)) {
+			if (isNaN(assignationId))
 				throw new Error(`Assignation ID <${ assignationId}> is not a number`);
 			assignationId = parseInt(assignationId);
 

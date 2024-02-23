@@ -133,7 +133,7 @@ module.exports = (app, ArticleSubCategoryModel, View) => {
 		try {
 			let articleSubCategoryId = request.params.articleSubCategoryId;
 			assert (articleSubCategoryId !== undefined);
-			if (isNaN(articleSubCategoryId)) {
+			if (isNaN(articleSubCategoryId))
 				throw new Error(`ArticleSubCategory ID <${ articleSubCategoryId}> is not a number`);
 			articleSubCategoryId = parseInt(articleSubCategoryId);
 

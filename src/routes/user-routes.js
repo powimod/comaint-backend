@@ -134,7 +134,7 @@ module.exports = (app, UserModel, View) => {
 		try {
 			let userId = request.params.userId;
 			assert (userId !== undefined);
-			if (isNaN(userId)) {
+			if (isNaN(userId))
 				throw new Error(`User ID <${ userId}> is not a number`);
 			userId = parseInt(userId);
 

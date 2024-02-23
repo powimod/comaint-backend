@@ -133,7 +133,7 @@ module.exports = (app, SubscriptionModel, View) => {
 		try {
 			let subscriptionId = request.params.subscriptionId;
 			assert (subscriptionId !== undefined);
-			if (isNaN(subscriptionId)) {
+			if (isNaN(subscriptionId))
 				throw new Error(`Subscription ID <${ subscriptionId}> is not a number`);
 			subscriptionId = parseInt(subscriptionId);
 

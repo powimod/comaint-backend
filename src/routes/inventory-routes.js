@@ -140,7 +140,7 @@ module.exports = (app, InventoryModel, View) => {
 		try {
 			let inventoryId = request.params.inventoryId;
 			assert (inventoryId !== undefined);
-			if (isNaN(inventoryId)) {
+			if (isNaN(inventoryId))
 				throw new Error(`Inventory ID <${ inventoryId}> is not a number`);
 			inventoryId = parseInt(inventoryId);
 

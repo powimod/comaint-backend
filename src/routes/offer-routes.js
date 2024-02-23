@@ -104,7 +104,7 @@ module.exports = (app, OfferModel, View) => {
 		try {
 			let offerId = request.params.offerId;
 			assert (offerId !== undefined);
-			if (isNaN(offerId)) {
+			if (isNaN(offerId))
 				throw new Error(`Offer ID <${ offerId}> is not a number`);
 			offerId = parseInt(offerId);
 

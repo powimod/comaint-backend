@@ -140,7 +140,7 @@ module.exports = (app, ArticleModel, View) => {
 		try {
 			let articleId = request.params.articleId;
 			assert (articleId !== undefined);
-			if (isNaN(articleId)) {
+			if (isNaN(articleId))
 				throw new Error(`Article ID <${ articleId}> is not a number`);
 			articleId = parseInt(articleId);
 
