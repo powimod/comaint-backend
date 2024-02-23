@@ -20,17 +20,17 @@ const assert = require('assert');
 class SelectorModel {
 	static #model = null;
 
-	// TODO issue-25 cleanup
+	// TODO cleanup
 	static randomParentId = (id) => {
 		return parseInt(Math.random() * 1000)
 	}
 
-	// TODO issue-25 cleanup
+	// TODO cleanup
 	static randomChildrenCount = (id) => {
 		return parseInt(Math.random() * 1000)
 	}
 
-	// TODO issue-25 cleanup
+	// TODO cleanup
 	static randomInfo = (id) => {
 		return "ABCDEF " + parseInt(Math.random() * 1000)
 	}
@@ -516,9 +516,10 @@ class SelectorModel {
 				type: null // unknown
 			}
 			const selectorId = selectors[element.name]
-			if ( selectorId !== undefined) {
+			if ( selectorId !== undefined && selectorId !== null) {
+				console.log("dOm id", selectorId)
 				if (isNaN(selectorId))
-					throw new Error(`Filter ${element.name} value is not a number`)
+					throw new Error(`Filter ${element.name} value [${selectorId}] is not a number`)
 				result.type = 'selector'
 				result.id = parseInt(selectorId)
 				result.label = await element.findInfoFunction(selectorId)

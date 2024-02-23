@@ -25,7 +25,7 @@ module.exports = (app, SelectorModel, View) => {
 	app.post('/api/v1/selector/request', /* TODO enable withAuth,*/ async (request, response) => {
 		const selectors = request.body.selectors
 
-		//try {
+		try {
 			if (selectors === undefined)
 				throw new Error(`Can't find <selectors> object in request body`)
 			assert(request.companyId)
@@ -38,11 +38,10 @@ module.exports = (app, SelectorModel, View) => {
 			}
 			const results = await SelectorModel.query(selectors)
 			View.sendJsonResult(response, { results })
-		// TODO issue-25 : reactivate this
-		//}
-		//catch (error) {
-		//	View.sendJsonError(response, error)
-		//}
+		}
+		catch (error) {
+			View.sendJsonError(response, error)
+		}
 	})
 }
 
