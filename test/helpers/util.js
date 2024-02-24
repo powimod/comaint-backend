@@ -87,7 +87,7 @@ const requestJsonFull = async (routeUrl, httpMethod, requestBody) => {
 			'Accept-Language': 'en, en-US'
 		}
 	}
-	if (httpMethod === 'POST')
+	if (httpMethod !== 'GET' )
 		fetchParam.body= JSON.stringify(requestBody)
 	if (accessToken !== null) 
 		fetchParam.headers['x-access-token'] = accessToken
@@ -116,6 +116,13 @@ const requestJsonPost = async (routeUrl, body) => {
 	return await  requestJsonFull(routeUrl, 'POST', body)
 }
 
+const requestJsonPut = async (routeUrl, body) => {
+	return await  requestJsonFull(routeUrl, 'PUT', body)
+}
+
+const requestJsonDelete = async (routeUrl, body) => {
+	return await  requestJsonFull(routeUrl, 'DELETE', body)
+}
 
 const connectDb = async () => {
 	db = await promise_mysql.createConnection({
@@ -153,6 +160,8 @@ module.exports = {
 	loadConfig,
 	requestJsonGet,
 	requestJsonPost,
+	requestJsonPut,
+	requestJsonDelete,
 	connectDb,
 	disconnectDb,
 	dbRequest,

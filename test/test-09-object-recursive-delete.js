@@ -31,7 +31,7 @@ describe('Test user recursive delete', () => {
 		//describe (`Control /${ROUTE_DELETE} route`, () => {
 			it(`Should refuse to delete user with token without recursion`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', dbUserToDelete.id)
-				let json = await util.requestJsonPost(route, {
+				let json = await util.requestJsonDelete(route, {
 					recursive: false
 				})
 				expect(json).to.have.property('ok')
@@ -41,7 +41,7 @@ describe('Test user recursive delete', () => {
 			}),
 			it(`Should accept to delete user with recursion`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', dbUserToDelete.id)
-				let json = await util.requestJsonPost(route, {
+				let json = await util.requestJsonDelete(route, {
 					recursive: true
 				})
 				expect(json).to.have.property('ok')

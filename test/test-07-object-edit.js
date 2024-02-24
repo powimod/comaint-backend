@@ -9,7 +9,7 @@ const account = require('./helpers/account.js')
 
 //const ROUTE_GET_BY_ID = 'api/v1/user/:userId';
 const ROUTE_CREATE = 'api/v1/user/create'
-const ROUTE_EDIT = 'api/v1/user/edit'
+const ROUTE_EDIT = 'api/v1/user/:userId'
 
 let dbUser = null
 let refUserToEdit = null
@@ -44,7 +44,9 @@ describe('Test user edition', () => {
 				userToEdit = json.data.user
 			}),
 			it(`Should detect missing user in request body`, async () => {
-				let json = await util.requestJsonPost(ROUTE_EDIT, { })
+				const userId = userToEdit.id
+				let route = ROUTE_EDIT.replace(':userId', userId)
+				let json = await util.requestJsonPut(route, { })
 				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean')
 					.and.to.be.equal(false)
@@ -53,7 +55,9 @@ describe('Test user edition', () => {
 					.and.to.be.equal(`Can't find <user> object in request body`)
 			}),
 			it(`Should detect invalid user in request body`, async () => {
-				let json = await util.requestJsonPost(ROUTE_EDIT, {
+				const userId = userToEdit.id
+				let route = ROUTE_EDIT.replace(':userId', userId)
+				let json = await util.requestJsonPut(route, {
 					user: "not_an_object"
 				})
 				expect(json).to.have.property('ok')
@@ -64,8 +68,10 @@ describe('Test user edition', () => {
 					.and.to.be.equal(`object argument is not an object`)
 			}),
 			it(`Should accept to change firstname to lower case`, async () => {
+				const userId = userToEdit.id
+				let route = ROUTE_EDIT.replace(':userId', userId)
 				userToEdit.firstname = userToEdit.firstname.toLowerCase()
-				let json = await util.requestJsonPost(ROUTE_EDIT, {
+				let json = await util.requestJsonPut(route, {
 					user: userToEdit
 				})
 				expect(json).to.have.property('ok')
@@ -83,8 +89,10 @@ describe('Test user edition', () => {
 					.and.to.be.equal(userToEdit.firstname)
 			}),
 			it(`Should accept to change firstname to upper case`, async () => {
+				const userId = userToEdit.id
+				let route = ROUTE_EDIT.replace(':userId', userId)
 				userToEdit.firstname = userToEdit.firstname.toUpperCase()
-				let json = await util.requestJsonPost(ROUTE_EDIT, {
+				let json = await util.requestJsonPut(route, {
 					user: userToEdit
 				})
 				expect(json).to.have.property('ok')

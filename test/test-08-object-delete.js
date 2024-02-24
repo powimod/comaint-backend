@@ -8,7 +8,7 @@ const util = require('./helpers/util.js')
 const account = require('./helpers/account.js')
 
 const ROUTE_CREATE = 'api/v1/user/create'
-const ROUTE_DELETE = 'api/v1/user/:userId/delete'
+const ROUTE_DELETE = 'api/v1/user/:userId'
 
 let dbUser = null
 let refUserToDelete = null
@@ -50,7 +50,7 @@ describe('Test user delete', () => {
 			}),
 			it(`Should detect invalid user ID`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', 'abc')
-				let json = await util.requestJsonPost(route, {})
+				let json = await util.requestJsonDelete(route, {})
 				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(false)
 				expect(json).to.have.property('error')
@@ -58,7 +58,7 @@ describe('Test user delete', () => {
 			}),
 			it(`Should detect non existent user ID`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', 65535)
-				let json = await util.requestJsonPost(route, {})
+				let json = await util.requestJsonDelete(route, {})
 				expect(json).to.have.property('ok')
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(false)
 				expect(json).to.have.property('error')
@@ -66,7 +66,7 @@ describe('Test user delete', () => {
 			}),
 			it(`Should accept to delete user`, async () => {
 				let route = ROUTE_DELETE.replace(':userId', userToDelete.id)
-				let json = await util.requestJsonPost(route, {})
+				let json = await util.requestJsonDelete(route, {})
 				expect(json.ok).to.be.a('boolean').and.to.be.equal(true)
 			}),
 			it(`check user no more exists`, async () => {

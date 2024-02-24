@@ -517,7 +517,6 @@ class SelectorModel {
 			}
 			const selectorId = selectors[element.name]
 			if ( selectorId !== undefined && selectorId !== null) {
-				console.log("dOm id", selectorId)
 				if (isNaN(selectorId))
 					throw new Error(`Filter ${element.name} value [${selectorId}] is not a number`)
 				result.type = 'selector'
